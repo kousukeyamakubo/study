@@ -6,43 +6,43 @@ from interfaces.tracker import ITracker
 from interfaces.gating import IGating
 from interfaces.association import IAssociation
 from core.state import GaussianState
-from core.kalman_filter import LinearKalmanFilter
+from interfaces.filter import IFilter
 
-class JPDAF(ITracker):
+class StandardTracker(ITracker):
     """
-    Joint Probabilistic Data Association Filter
+    Standard Tracker
     部品（Gating, Association）を組み合わせて追跡を行うクラス
     """
     
-    def __init__(self, kf: LinearKalmanFilter, 
+    def __init__(self, filter: IFilter, 
                  gating_module: IGating, 
                  association_calculator: IAssociation):
         """
         Args:
-            kf: カルマンフィルタ（状態予測・更新の計算式）
+            filter: カルマンフィルタ（状態予測・更新の計算式）
             gating_module: ゲーティング処理を行う部品
             association_calculator: データ割り当て確率計算を行う部品
         """
-        self.kf = kf
+        self.filter = filter
         # 外部から注入された部品を保持
         self.gating_module = gating_module
         self.association_calculator = association_calculator
         
-        self.H = kf.H
-        self.R = kf.R
+        self.H = filter.H
+        self.R = filter.R
 
     def predict(self, states: List[GaussianState]) -> List[GaussianState]:
         """
         全ターゲットの予測ステップ
         """
         # 各ターゲットに対して単純にKFの予測を実行
-        predicted_states = [self.kf.predict(s) for s in states]
+        predicted_states = [self.filter.predict(s) for s in states]
         return predicted_states
 
     def update(self, predicted_states: List[GaussianState], 
                  measurements: List[np.ndarray]) -> Tuple[List[GaussianState], Any]:
         """
-        JPDAFの更新ステップ
+        Standard Trackerの更新ステップ
         Return:
             (更新後の状態リスト, バリデーション情報)
         """

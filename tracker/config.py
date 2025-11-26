@@ -15,6 +15,7 @@ class Config:
     # --- システム構成（ここを変えると使うクラスが変わる） ---
     tracker_type: str = "JPDA"        # "JPDA", "GNN", "PDA" ...
     gating_type: str = "Ellipsoidal"  # "Ellipsoidal", "Rectangular" ...
+    filter_type: str = "KF"           # "KF" (Linear), "EKF" (Extended)
     
     # --- JPDAF / Gating 設定 ---
     gate_threshold: float = 9.21  # カイ二乗分布の閾値

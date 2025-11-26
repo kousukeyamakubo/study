@@ -1,7 +1,8 @@
 import numpy as np
 from .state import GaussianState
+from interfaces.filter import IFilter  # IFilterをインポート
 
-class LinearKalmanFilter:
+class LinearKalmanFilter(IFilter):
     """線形カルマンフィルタ"""
     
     def __init__(self, F: np.ndarray, H: np.ndarray, Q: np.ndarray, R: np.ndarray):
@@ -13,10 +14,21 @@ class LinearKalmanFilter:
             R: 観測ノイズ共分散
         """
         self.F = np.asarray(F)
-        self.H = np.asarray(H)
+        # プロパティの実体として内部変数(_H, _R)に保存
+        self._H = np.asarray(H)
         self.Q = np.asarray(Q)
-        self.R = np.asarray(R)
+        self._R = np.asarray(R)
     
+    # --- IFilterの要件を満たすためのプロパティ実装 ---
+    @property
+    def H(self) -> np.ndarray:
+        return self._H
+
+    @property
+    def R(self) -> np.ndarray:
+        return self._R
+    # ---------------------------------------------
+
     def predict(self, state: GaussianState) -> GaussianState:
         """予測ステップ"""
         predicted_mean = self.F @ state.mean
@@ -26,6 +38,8 @@ class LinearKalmanFilter:
     def update(self, predicted_state: GaussianState, measurement: np.ndarray) -> GaussianState:
         """更新ステップ"""
         measurement = np.asarray(measurement)
+        
+        # self.H, self.R はプロパティ経由でアクセスされるため、計算式は変更不要
         
         # イノベーション
         innovation = measurement - self.H @ predicted_state.mean

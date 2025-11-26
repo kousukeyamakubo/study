@@ -2,9 +2,8 @@ import numpy as np
 
 # 各種モジュールのインポート
 from config import Config
-from factory import create_tracker
+from factory import create_tracker, create_filter
 from simulator import TrackingSimulator
-from core.kalman_filter import LinearKalmanFilter
 from core.models import get_motion_model, get_measurement_model
 from utils.data_saver import ResultSaver
 from utils.data_generator import MeasurementGenerator, OvertakingScenario, CSVScenario
@@ -14,6 +13,7 @@ def main():
     cfg = Config()
     np.random.seed(cfg.seed)
     print(f"--- Config Loaded ---")
+    print(f"filter Type : {cfg.filter_type}")
     print(f"Tracker Type: {cfg.tracker_type}")
     print(f"Gating Type : {cfg.gating_type}")
     print(f"Motion Model: {cfg.motion_model}")
@@ -29,13 +29,13 @@ def main():
     
     # -------- 3. カルマンフィルタの構築 -----------------
     # LinearKalmanFilterはcore/kalman_filter.pyに定義
-    kf = LinearKalmanFilter(F, H, Q, R)
+    filter = create_filter(cfg, F, H, Q, R)
     # --------------------------------------------------
     
     # ------ 4. トラッカーの生成 (factory.py に委譲) -----
     # JPDAFかGNNかなどはConfig文字列で決まる
     # create_trackerはfactory.pyに定義
-    tracker = create_tracker(cfg, kf)
+    tracker = create_tracker(cfg, filter)
     # --------------------------------------------------
     
     # ------ 5. データ生成 (シナリオ) -------------------
