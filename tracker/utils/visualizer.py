@@ -69,7 +69,8 @@ class ResultVisualizer:
         #plt.axis('equal')
         #plt.tick_params(axis='both', labelsize=25)
         # ここに追加します
-        plt.xlim(-20, 20)
+        plt.xlim(-40, -30)
+        plt.ylim(0,30)
         
         if save_path:
             plt.savefig(save_path, dpi=300, bbox_inches='tight')

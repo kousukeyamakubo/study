@@ -42,7 +42,9 @@ def main():
     if cfg.use_csv_mode:
         # CSVファイルからデータを読み込むモード
         # CSVScenarioはutils/data_generator.pyに定義
-        scenario = CSVScenario("true_data.csv", "meas_data.csv")
+        scenario = CSVScenario("true_data.csv", "measurements.csv")
+        scenario.get_data()
+        print("Data loaded from CSV files.")
     else:
         # ユーザによる指定モード
         # MeasurementGenerator にも生成した行列H, Rを渡す
@@ -61,7 +63,8 @@ def main():
     true_trajs, measurements_list = scenario.get_data()
     
     # 初期状態 (真値の初項)
-    initial_states = [traj[0] for traj in true_trajs]
+    #initial_states = [traj[0] for traj in true_trajs]
+    initial_states = []
     # --------------------------------------------------
     
     # ------ 6. シミュレータの構築と実行 -----------------

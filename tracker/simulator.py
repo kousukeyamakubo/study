@@ -82,9 +82,20 @@ class TrackingSimulator:
         
         # --- 結果の整形 ---
         # [Time, Target] の形式を [Target, Time] に変換
-        final_estimated_trajectories = [[] for _ in range(len(initial_states))]
+        #final_estimated_trajectories = [[] for _ in range(len(initial_states))]
+        
+        # 修正後
+        max_targets =0
+        for states_at_t in all_estimated_states:
+            max_targets = max(max_targets, len(states_at_t))
+            
+        final_estimated_trajectories = [[] for _ in range(max_targets)]
+        
         for states_at_t in all_estimated_states:
             for target_idx, state in enumerate(states_at_t):
+                # 念のため、インデックスが範囲外なら拡張する処理を入れておく（安全策）
+                while len(final_estimated_trajectories) <= target_idx:
+                    final_estimated_trajectories.append([])
                 final_estimated_trajectories[target_idx].append(state)
 
         if verbose and true_trajectories is not None:

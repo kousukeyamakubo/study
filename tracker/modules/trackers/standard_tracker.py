@@ -49,6 +49,14 @@ class StandardTracker(ITracker):
         num_targets = len(predicted_states)
         num_measurements = len(measurements)
         
+        # --- (A) トラックがまだ無い場合の処理 (追加) ---
+        if num_targets == 0:
+            # 全ての観測を新規トラックとして登録して返す
+            new_tracks = []
+            for z in measurements:
+                new_tracks.append(self._init_new_track(z))
+            return new_tracks, [] # infoは空で返す
+        
         # 観測がない場合は予測状態をそのまま返す
         if num_measurements == 0:
             return predicted_states, []
@@ -116,5 +124,42 @@ class StandardTracker(ITracker):
             updated_cov = beta_i[0] * state.covariance + (1 - beta_i[0]) * P_c + spread_term
             
             updated_states.append(GaussianState(updated_mean, updated_cov))
+        
+        # --- (B) 新規トラック生成 (追加) ---
+        # どのトラックのゲートにも入らなかった観測 (validation_matrixの列の和が0) を探す
+        # validation_matrix: [Target x Measurement]
+        # 列方向に足して 0 なら、誰のゲートにも入っていない
+        
+        is_assigned = validation_matrix.sum(axis=0) # [M]
+        
+        for j in range(num_measurements):
+            if is_assigned[j] == 0:
+                # 誰とも紐付かなかった観測 j -> 新規トラックへ
+                z = measurements[j]
+                new_track = self._init_new_track(z)
+                updated_states.append(new_track)
+                
+                # 必要ならログ出力
+                # print(f"New track initiated from measurement {j}")
             
         return updated_states, validated_measurements_per_target
+
+    def _init_new_track(self, z: np.ndarray) -> GaussianState:
+            """
+            観測値から新しいトラックを生成するヘルパーメソッド
+            (ここを追加し忘れていたのがエラーの原因です)
+            """
+            # 位置は観測値、速度は0で初期化
+            # z = [x, y] を想定 -> [x, y, 0, 0]
+            init_mean = np.array([z[0], z[1], 0.0, 0.0]) 
+            
+            # 共分散の初期値
+            # 位置の分散は観測ノイズR程度、速度の分散は「わからない」ので大きくする
+            # R = [[r, 0], [0, r]] と仮定して対角成分を取り出す
+            r_var_x = self.R[0, 0]
+            r_var_y = self.R[1, 1]
+            v_var = 100.0 # 速度の初期不確かさ（大きめに設定）
+            
+            init_cov = np.diag([r_var_x, r_var_y, v_var, v_var])
+            
+            return GaussianState(init_mean, init_cov)

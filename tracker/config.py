@@ -6,11 +6,11 @@ class Config:
     """シミュレーションおよびアルゴリズム設定用のコンフィグクラス"""
     # --- シミュレーション基本設定 ---
     seed: int = 42
-    num_steps: int = 40
+    num_steps: int = 21
     dt: float = 0.5
     
     # --- 観測データ設定 ---
-    use_csv_mode : bool = False
+    use_csv_mode : bool = True
     
     # --- システム構成（ここを変えると使うクラスが変わる） ---
     tracker_type: str = "JPDA"        # "JPDA", "GNN", "PDA" ...
@@ -29,7 +29,8 @@ class Config:
     # mutableなデフォルト値はfield(default_factory=...)を使う必要があります
     clutter_params: dict = field(default_factory=lambda: {
         'type': 'around_target',
-        'num_clutter': [1, 8], 
+        #'num_clutter': [1, 8],
+        'num_clutter': 0,
         'clutter_spatial_density': [0.5, 1.0]
     })
     

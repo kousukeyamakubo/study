@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd # CSV読み込み用 (将来)
 from typing import List, Tuple, Optional,Dict
 from abc import ABC, abstractmethod
+from pathlib import Path
 
 # 以前の MeasurementGenerator は、"SimulationScenario" 内の部品として使います
 class MeasurementGenerator:
@@ -161,6 +162,86 @@ class CSVScenario(ScenarioProvider):
 
     def get_data(self) -> Tuple[List[np.ndarray], List[List[np.ndarray]]]:
         # ここに pd.read_csv 等の実装が入る
-        print(f"Loading data from {self.true_csv_path} and {self.meas_csv_path}...")
-        # ダミーリターン
-        return [], []
+        true_trajectories = []
+        measurements_list = []
+
+        # --- 1. 観測データ (measurements.csv) の読み込み ---
+        meas_path = Path(self.meas_csv_path)
+        if meas_path.exists():
+            print(f"Loading measurements from {meas_path}...")
+            try:
+                df_meas = pd.read_csv(meas_path)
+                
+                # カラム名の揺らぎ吸収 (X, Y または x, y)
+                col_x = 'X' if 'X' in df_meas.columns else 'x'
+                col_y = 'Y' if 'Y' in df_meas.columns else 'y'
+                col_time = 'Time' if 'Time' in df_meas.columns else 'time'
+
+                if col_time not in df_meas.columns:
+                    raise ValueError(f"Column '{col_time}' not found in {self.meas_csv_path}")
+
+                # シミュレーションのステップ数を決定 (Timeの最大値 + 1)
+                max_time = int(df_meas[col_time].max())
+                measurements_list = [[] for _ in range(max_time + 1)]
+
+                # タイムステップごとにグループ化
+                for t, group in df_meas.groupby(col_time):
+                    step_measurements = []
+                    for _, row in group.iterrows():
+                        # [x, y] のnumpy配列を作成
+                        z = np.array([row[col_x], row[col_y]], dtype=float)
+                        step_measurements.append(z)
+                    
+                    # Timeが整数の場合、そのままインデックスとして使用
+                    # (measurements.csvのTimeが1始まりなら、measurements_list[1]に入る)
+                    t_idx = int(t)
+                    if 0 <= t_idx < len(measurements_list):
+                        measurements_list[t_idx] = step_measurements
+            
+            except Exception as e:
+                print(f"Error loading measurements CSV: {e}")
+                # エラー時は空リストなどを返すか、raiseするか
+                measurements_list = []
+        else:
+            print(f"Measurements file not found: {self.meas_csv_path}")
+
+        # --- 2. 真値データ (true_trajectory.csv) の読み込み ---
+        # ※ファイルがない場合は空リストを返す（予測のみのテスト用）
+        true_path = Path(self.true_csv_path)
+        if true_path.exists():
+            print(f"Loading true trajectories from {true_path}...")
+            try:
+                df_true = pd.read_csv(true_path)
+                
+                # 想定フォーマット: time, target_id, x, y, vx, vy
+                # カラム名の揺らぎ吸収
+                t_col = 'time' if 'time' in df_true.columns else 'Time'
+                id_col = 'target_id' if 'target_id' in df_true.columns else 'id'
+                x_col = 'x' if 'x' in df_true.columns else 'X'
+                y_col = 'y' if 'y' in df_true.columns else 'Y'
+                vx_col = 'vx' if 'vx' in df_true.columns else 'Vx'
+                vy_col = 'vy' if 'vy' in df_true.columns else 'Vy'
+
+                # ターゲットIDごとに分割
+                for target_id, group in df_true.groupby(id_col):
+                    # 時間順にソート
+                    group = group.sort_values(t_col)
+                    
+                    # 状態ベクトル [x, y, vx, vy] を作成
+                    # vx, vyがない場合は0で埋めるなどの処理が必要だが、ここではあると仮定
+                    if vx_col in group.columns and vy_col in group.columns:
+                        traj = group[[x_col, y_col, vx_col, vy_col]].to_numpy()
+                    else:
+                        # 位置のみの場合 [x, y, 0, 0]
+                        pos = group[[x_col, y_col]].to_numpy()
+                        traj = np.hstack([pos, np.zeros_like(pos)])
+                    
+                    true_trajectories.append(traj)
+
+            except Exception as e:
+                print(f"Error loading true trajectory CSV: {e}")
+        else:
+            print(f"True trajectory file not found (or not specified): {self.true_csv_path}")
+            # 真値がない場合でも動作するように空リストを返す
+
+        return true_trajectories, measurements_list
