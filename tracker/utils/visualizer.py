@@ -37,8 +37,8 @@ class ResultVisualizer:
         plt.figure(figsize=(12, 10))
         
         # 観測データ（全ターゲット共通）
-        plt.scatter(measurements['x'], measurements['y'], c='gray', alpha=0.3, 
-                           s=30, label='Measurements')
+        #plt.scatter(measurements['x'], measurements['y'], c='red', alpha=0.3, 
+        #                   s=140, label='Measurements')
         
         num_targets = true_traj['target_id'].nunique()
         
@@ -46,31 +46,36 @@ class ResultVisualizer:
             color = self.colors[i]
             
             # 真の軌道
+            # 線あり
             true_t = true_traj[true_traj['target_id'] == i]
-            plt.plot(true_t['x'], true_t['y'], '-', linewidth=2, color=color,
-                    label=f'True Target {i}', marker='o', markersize=4)
+            #plt.plot(true_t['x'], true_t['y'], '-', linewidth=2, color=color,
+            #        label=f'True Target {i}', marker='o', markersize=4)
+            # 線なし
+            plt.plot(true_t['x'], true_t['y'], 'o', linewidth=2, color=color,
+                    label=f'True Target {i}', marker='o', markersize=10)
             
-            # 推定軌道
+            #推定軌道
             est_t = est_traj[est_traj['target_id'] == i]
-            plt.plot(est_t['x'], est_t['y'], '--', linewidth=2, color=color,
-                    label=f'Estimated Target {i}', marker='s', markersize=4)
+            plt.plot(est_t['x'], est_t['y'], '--', linewidth=2, color='red',
+                    label=f'Estimated Target {i}', marker='s', markersize=10)
             
             # 開始点と終了点
             plt.plot(true_t['x'].iloc[0], true_t['y'].iloc[0], 'o', color=color,
-                    markersize=12, label=f'Start T{i}', alpha=0.5)
+                    markersize=20, label=f'Start T{i}', alpha=0.5)
             plt.plot(true_t['x'].iloc[-1], true_t['y'].iloc[-1], 'X', color=color,
-                    markersize=12, label=f'End T{i}', alpha=0.5)
+                    markersize=20, label=f'End T{i}', alpha=0.5)
         
-        plt.xlabel('X Position', fontsize=10)
-        plt.ylabel('Y Position', fontsize=10)
-        plt.title('JPDAF Tracking Result - 2D Trajectory', fontsize=20, fontweight='bold')
-        plt.legend(loc='best', fontsize=10, bbox_to_anchor=(1.05, 1))
+        plt.tick_params(labelsize=22)
+        plt.xlabel('X Position', fontsize=30)
+        plt.ylabel('Y Position', fontsize=30)
+        #plt.title('JPDAF Tracking Result - 2D Trajectory', fontsize=20, fontweight='bold')
+        plt.legend(loc='best', fontsize=20, bbox_to_anchor=(1.05, 1))
         plt.grid(True, alpha=0.3)
         #plt.axis('equal')
         #plt.tick_params(axis='both', labelsize=25)
         # ここに追加します
         plt.xlim(-40, -30)
-        plt.ylim(0,30)
+        plt.ylim(14,16)
         
         if save_path:
             plt.savefig(save_path, dpi=300, bbox_inches='tight')
@@ -128,8 +133,8 @@ def main_visualize():
     print("Plotting 2D trajectory...")
     visualizer.plot_trajectory_2d()
     
-    print("Plotting position error...")
-    visualizer.plot_position_error()
+    #print("Plotting position error...")
+    #visualizer.plot_position_error()
 
 if __name__ == "__main__":
     # 可視化を実行する場合は、main.py とは別に実行してください
