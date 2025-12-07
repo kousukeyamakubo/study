@@ -190,7 +190,14 @@ class CSVScenario(ScenarioProvider):
                     for _, row in group.iterrows():
                         # [x, y] のnumpy配列を作成
                         z = np.array([row[col_x], row[col_y]], dtype=float)
-                        step_measurements.append(z)
+                        
+                        # --- ★追加修正: nanが含まれているデータはリストに追加しない ---
+                        if not np.isnan(z).any():
+                            step_measurements.append(z)
+                        # -------------------------------------------------------
+                        
+                        #修正前
+                        #step_measurements.append(z)
                     
                     # Timeが整数の場合、そのままインデックスとして使用
                     # (measurements.csvのTimeが1始まりなら、measurements_list[1]に入る)

@@ -36,5 +36,6 @@ class Config:
     
     # -- 運動・観測モデル設定 ---
     motion_model: str = "CV"          # "CV" (等速), "CA" (等加速) など
+    # デフォルトはどちらも0.5
     process_noise_std: float = 0.5    # プロセスノイズの標準偏差 (Qの元)
     measurement_noise_std: float = 0.5 # 観測ノイズの標準偏差 (Rの元)

@@ -98,8 +98,9 @@ class TrackingSimulator:
                     final_estimated_trajectories.append([])
                 final_estimated_trajectories[target_idx].append(state)
 
-        if verbose and true_trajectories is not None:
-            self._print_results(true_trajectories, final_estimated_trajectories)
+        #　オクルージョンが発生するとRMSE計算ができないのでいったんコメントアウト
+        #if verbose and true_trajectories is not None:
+            #self._print_results(true_trajectories, final_estimated_trajectories)
         
         return final_estimated_trajectories, info_list
     

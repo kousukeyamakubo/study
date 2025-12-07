@@ -43,7 +43,6 @@ def main():
         # CSVファイルからデータを読み込むモード
         # CSVScenarioはutils/data_generator.pyに定義
         scenario = CSVScenario("true_data.csv", "measurements.csv")
-        scenario.get_data()
         print("Data loaded from CSV files.")
     else:
         # ユーザによる指定モード

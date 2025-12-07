@@ -29,7 +29,7 @@ class cyclist_env():
         angs = calculator.anglecal()
         vels = calculator.rel_velosity()
         ranges = calculator.rangecal()
-
+        
         cy_ang, ve_ang, rp_ang = angs[0], angs[1], angs[2]
         #cy_ang, ve_ang = [-30*np.pi/180, 30*np.pi/180], []
         cy_sv = stevec(self.N_ant, cy_ang)
@@ -55,13 +55,14 @@ class cyclist_env():
         return self.result
     
     def tx(self):
-        f_sub = self.BW_sub * np.arange(self.N_ant)
-        f_carrier_foreach = f_sub
-        f_carrier_foreach = np.matrix(f_carrier_foreach).T
-        n = np.arange(self.tx_sample)
-        chirp = np.exp(1j*np.pi*(np.sqrt(self.mu)*self.T_sample*n)**2)
-        carriers = np.exp(1j*2*np.pi*f_carrier_foreach*(self.T_sample*n))
-        tx = np.multiply(carriers, chirp)/np.sqrt(self.N_ant)
+        f_sub = self.BW_sub * np.arange(self.N_ant)                         # [0, BW_sub, 2*BW_sub, ..., (N_ant-1)*BW_sub]の配列
+        f_carrier_foreach = f_sub                                           # 各アンテナの搬送波周波数
+        f_carrier_foreach = np.matrix(f_carrier_foreach).T                  # 列ベクトルに変換
+        n = np.arange(self.tx_sample)                                       # "0"以上"一回のチャープで送信するサンプル数(チャープ信号そのものの長さ)"未満まで1ずつ増える配列
+        chirp = np.exp(1j*np.pi*(np.sqrt(self.mu)*self.T_sample*n)**2)      # 傾きmuのアップチャープ信号の波形の関数(時間tが独立変数)
+        carriers = np.exp(1j*2*np.pi*f_carrier_foreach*(self.T_sample*n))   # 各アンテナのチャープの位相をずらすための角度に関する複素数(行：アンテナ数×列：一回のチャープで送信するサンプル数，ずらしの幅は帯域幅で決まる)
+        # 周波数をBW_subずつずらした搬送波をかけることで、各アンテナで異なるチャープ信号を送信することができる
+        tx = np.multiply(carriers, chirp)/np.sqrt(self.N_ant)               # 実際のチャープの波形と搬送波をかけ合わせたもの(行：アンテナ数×列：一回のチャープで送信するサンプル数) 
         return tx
 
     def rx_multiple(self, tx, P_rx_cy, tstemp_rx_cy, phase_cy, P_rx_ve, tstemp_rx_ve, phase_ve, P_rx_rp, tstemp_rx_rp, phase_rp, P_N_dB, sym_duration, N_trans):
@@ -146,6 +147,7 @@ class cyclist_env():
 class cals():
     def __init__(self, bs, cy, ve, rp, v_cy, v_ve, v_rp):
         self.bs, self.cy, self.ve, self.rp, self.v_cy, self.v_ve, self.v_rp = bs, cy, ve, rp, v_cy, v_ve, v_rp
+        
     def rangecal(self):
         if len(self.cy)!=0 : cy_range = np.linalg.norm(self.bs-self.cy, axis = 1)
         else: cy_range = np.array([])
