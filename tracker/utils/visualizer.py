@@ -43,7 +43,7 @@ class ResultVisualizer:
         
         return true_traj, est_traj, measurements, validated
     
-    def plot_trajectory_2d(self, save_path: str = None):
+    def plot_trajectory_2d(self, save_path: str = None, show_measurements: bool = True):
         """2次元軌道をプロット (複数ターゲット対応)"""
         true_traj, est_traj, measurements, _ = self.load_data()
         
@@ -67,6 +67,8 @@ class ResultVisualizer:
             plt.plot(true_t['x'], true_t['y'], linewidth=2, color=color,
                     label=f'True Target {target_id}', marker='o', markersize=10)
             
+            
+            
             # 推定軌道
             est_t = est_traj[est_traj['target_id'] == target_id]
             if not est_t.empty:
@@ -78,7 +80,12 @@ class ResultVisualizer:
                     markersize=20, label=f'Start T{target_id}', alpha=0.5, linestyle='None')
             plt.plot(true_t['x'].iloc[-1], true_t['y'].iloc[-1], marker='X', color=color,
                     markersize=20, label=f'End T{target_id}', alpha=0.5, linestyle='None')
-        
+            
+            # measurements（観測点）をプロットする（必要なら）
+            if show_measurements and measurements is not None and not measurements.empty:
+                # measurements CSV に target_id が含まれていない前提で全観測点を散布
+                plt.scatter(measurements['x'], measurements['y'], s=25, c='gray', marker='x',
+                    alpha=0.7, label='Measurements')
         plt.tick_params(labelsize=22)
         plt.xlabel('X Position', fontsize=30)
         plt.ylabel('Y Position', fontsize=30)
@@ -89,7 +96,7 @@ class ResultVisualizer:
         
         # 範囲指定（データに合わせて調整が必要かもしれません）
         plt.xlim(-40, -30)
-        plt.ylim(14, 16)
+        plt.ylim(10, 16)
         
         if save_path:
             plt.savefig(save_path, dpi=300, bbox_inches='tight')
