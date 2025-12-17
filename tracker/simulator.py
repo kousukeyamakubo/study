@@ -63,7 +63,7 @@ class TrackingSimulator:
         all_estimated_states = [current_estimates] # [step][target_idx]
         
         # --- メインループ ---
-        for i in range(1, num_steps):
+        for i in range(num_steps):
             meas_at_t = measurements_list[i]
             
             # 1. 予測 (Trackerに委譲)

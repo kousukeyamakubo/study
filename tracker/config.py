@@ -7,7 +7,7 @@ class Config:
     # --- シミュレーション基本設定 ---
     seed: int = 42
     num_steps: int = 21
-    dt: float = 0.5
+    dt: float = 0.05
     
     # --- 観測データ設定 ---
     use_csv_mode : bool = True

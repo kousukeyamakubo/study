@@ -171,11 +171,15 @@ class CSVScenario(ScenarioProvider):
             print(f"Loading measurements from {meas_path}...")
             try:
                 df_meas = pd.read_csv(meas_path)
-                
+
                 # カラム名の揺らぎ吸収 (X, Y または x, y)
-                col_x = 'X' if 'X' in df_meas.columns else 'x'
-                col_y = 'Y' if 'Y' in df_meas.columns else 'y'
                 col_time = 'Time' if 'Time' in df_meas.columns else 'time'
+                col_range = 'Range' if 'Range' in df_meas.columns else 'range'
+                col_angle = 'Angle' if 'Angle' in df_meas.columns else 'angle'
+                col_x = 'X' if 'X' in df_meas.columns else 'x'
+                col_y = 'Y' if 'Y' in df_meas.columns else 'y' 
+                col_velocity = 'Velocity' if 'Velocity' in df_meas.columns else 'velocity'
+                
 
                 if col_time not in df_meas.columns:
                     raise ValueError(f"Column '{col_time}' not found in {self.meas_csv_path}")
@@ -189,7 +193,7 @@ class CSVScenario(ScenarioProvider):
                     step_measurements = []
                     for _, row in group.iterrows():
                         # [x, y] のnumpy配列を作成
-                        z = np.array([row[col_x], row[col_y]], dtype=float)
+                        z = np.array([row[col_range], row[col_angle],row[col_x], row[col_y], row[col_velocity]], dtype=float)
                         
                         # --- ★追加修正: nanが含まれているデータはリストに追加しない ---
                         if not np.isnan(z).any():
@@ -219,25 +223,25 @@ class CSVScenario(ScenarioProvider):
             print(f"Loading true trajectories from {true_path}...")
             try:
                 df_true = pd.read_csv(true_path)
-                
+
                 # 想定フォーマット: time, target_id, x, y, vx, vy
                 # カラム名の揺らぎ吸収
                 t_col = 'time' if 'time' in df_true.columns else 'Time'
                 id_col = 'target_id' if 'target_id' in df_true.columns else 'id'
                 x_col = 'x' if 'x' in df_true.columns else 'X'
                 y_col = 'y' if 'y' in df_true.columns else 'Y'
-                vx_col = 'vx' if 'vx' in df_true.columns else 'Vx'
-                vy_col = 'vy' if 'vy' in df_true.columns else 'Vy'
+                range_col = 'range' if 'range' in df_true.columns else 'Range'
+                angle_col = 'angle' if 'angle' in df_true.columns else 'Angle'
+                velocity_col = 'velocity' if 'velocity' in df_true.columns else 'Velocity'
 
                 # ターゲットIDごとに分割
                 for target_id, group in df_true.groupby(id_col):
                     # 時間順にソート
                     group = group.sort_values(t_col)
-                    
                     # 状態ベクトル [x, y, vx, vy] を作成
                     # vx, vyがない場合は0で埋めるなどの処理が必要だが、ここではあると仮定
-                    if vx_col in group.columns and vy_col in group.columns:
-                        traj = group[[x_col, y_col, vx_col, vy_col]].to_numpy()
+                    if velocity_col in group.columns:
+                        traj = group[[x_col, y_col, range_col, angle_col, velocity_col]].to_numpy()
                     else:
                         # 位置のみの場合 [x, y, 0, 0]
                         pos = group[[x_col, y_col]].to_numpy()

@@ -47,6 +47,8 @@ class StandardTracker(ITracker):
             (更新後の状態リスト, バリデーション情報)
         """
         num_targets = len(predicted_states)
+        # 修正
+        measurements_xy = [z[2:4] for z in measurements]
         num_measurements = len(measurements)
         
         # --- (A) トラックがまだ無い場合の処理 (追加) ---
@@ -54,7 +56,7 @@ class StandardTracker(ITracker):
             # 全ての観測を新規トラックとして登録して返す
             new_tracks = []
             for z in measurements:
-                new_tracks.append(self._init_new_track(z))
+                new_tracks.append(self._init_new_track(z[2:4]))
             return new_tracks, [] # infoは空で返す
         
         # 観測がない場合は予測状態をそのまま返す
@@ -67,7 +69,7 @@ class StandardTracker(ITracker):
         
         for i, state in enumerate(predicted_states):
             # 注入された GatingModule を使用
-            indices = self.gating_module.validate_measurements(state, measurements)
+            indices = self.gating_module.validate_measurements(state, measurements_xy)
             validated_measurements_per_target.append(indices)
             
             for j in indices:
@@ -76,7 +78,7 @@ class StandardTracker(ITracker):
         # --- ステップ2: アソシエーション確率計算 (部品に委譲) ---
         # 注入された AssociationCalculator を使用
         beta = self.association_calculator.calculate_probabilities(
-            predicted_states, measurements, validation_matrix
+            predicted_states, measurements_xy, validation_matrix
         )
         
         # --- ステップ3: 各ターゲットの状態更新 ---
@@ -97,7 +99,7 @@ class StandardTracker(ITracker):
             validated_indices = validated_measurements_per_target[i]
             
             # イノベーション計算
-            innovations = [measurements[j] - self.H @ state.mean for j in validated_indices]
+            innovations = [measurements_xy[j] - self.H @ state.mean for j in validated_indices]
             
             # 複合イノベーション (v_i)
             combined_innovation = np.zeros(self.H.shape[0]) 
@@ -136,7 +138,7 @@ class StandardTracker(ITracker):
             if is_assigned[j] == 0:
                 # 誰とも紐付かなかった観測 j -> 新規トラックへ
                 z = measurements[j]
-                new_track = self._init_new_track(z)
+                new_track = self._init_new_track(z[2:4])
                 updated_states.append(new_track)
                 
                 # 必要ならログ出力

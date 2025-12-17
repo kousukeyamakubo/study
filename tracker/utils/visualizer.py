@@ -19,7 +19,20 @@ class ResultVisualizer:
     
     def load_data(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """CSVファイルからデータを読み込む"""
-        true_traj = pd.read_csv(self.csv_dir / "true_trajectory.csv")
+        true_traj_path = self.csv_dir / "true_trajectory.csv"
+        
+        # まず普通に読み込む
+        true_traj = pd.read_csv(true_traj_path)
+        '''
+        # データがずれている場合（y列が文字列として認識されている場合）の補正処理
+        # 本来数値であるはずの 'y' が object 型（文字列等）になっているかで判定
+        if true_traj['y'].dtype == 'object':
+            print("Warning: Detected malformed CSV (columns shift). Reloading with correction.")
+            # ヘッダー行(0行目)を無視し、7列分の名前を強制的に割り当てて読み直す
+            true_traj = pd.read_csv(true_traj_path, 
+                                  names=['time', 'target_id','x', 'y','range', 'angle', 'velocity'], 
+                                  header=0)
+        '''
         est_traj = pd.read_csv(self.csv_dir / "estimated_trajectory.csv")
         measurements = pd.read_csv(self.csv_dir / "measurements.csv")
         
@@ -36,46 +49,47 @@ class ResultVisualizer:
         
         plt.figure(figsize=(12, 10))
         
-        # 観測データ（全ターゲット共通）
-        #plt.scatter(measurements['x'], measurements['y'], c='red', alpha=0.3, 
-        #                   s=140, label='Measurements')
-       # 
-        num_targets = true_traj['target_id'].nunique()
-        
-        for i in range(num_targets):
-            color = self.colors[i]
+        # 存在するターゲットIDのリストを取得してループする
+        unique_target_ids = true_traj['target_id'].unique()
+        # 色の割り当て用にenumerateを使う
+        for idx, target_id in enumerate(unique_target_ids):
+            # 色を循環させる (ターゲットIDが大きくてもエラーにならないように)
+            color = self.colors[idx % len(self.colors)]
             
-            # 真の軌道
-            # 線あり
-            true_t = true_traj[true_traj['target_id'] == i]
-            #plt.plot(true_t['x'], true_t['y'], '-', linewidth=2, color=color,
-            #        label=f'True Target {i}', marker='o', markersize=4)
-            # 線なし
-            plt.plot(true_t['x'], true_t['y'], 'o', linewidth=2, color=color,
-                    label=f'True Target {i}', marker='o', markersize=10)
+            # 真の軌道 (target_id を使用)
+            true_t = true_traj[true_traj['target_id'] == target_id]
             
-            #推定軌道
-            est_t = est_traj[est_traj['target_id'] == i]
-            plt.plot(est_t['x'], est_t['y'], '--', linewidth=2, color='red',
-                    label=f'Estimated Target {i}', marker='s', markersize=10)
+            # データが存在しない場合のガード（念のため）
+            if true_t.empty:
+                continue
+
+            # 線なし (フォーマット文字列 'o' を削除して warning を解消)
+            plt.plot(true_t['x'], true_t['y'], linewidth=2, color=color,
+                    label=f'True Target {target_id}', marker='o', markersize=10)
             
-            # 開始点と終了点
-            plt.plot(true_t['x'].iloc[0], true_t['y'].iloc[0], 'o', color=color,
-                    markersize=20, label=f'Start T{i}', alpha=0.5)
-            plt.plot(true_t['x'].iloc[-1], true_t['y'].iloc[-1], 'X', color=color,
-                    markersize=20, label=f'End T{i}', alpha=0.5)
+            # 推定軌道
+            est_t = est_traj[est_traj['target_id'] == target_id]
+            if not est_t.empty:
+                plt.plot(est_t['x'], est_t['y'], '--', linewidth=2, color='red',
+                        label=f'Estimated Target {target_id}', marker='s', markersize=10)
+            
+            # 開始点と終了点 (iloc[0]のエラー箇所)
+            plt.plot(true_t['x'].iloc[0], true_t['y'].iloc[0], marker='o', color=color,
+                    markersize=20, label=f'Start T{target_id}', alpha=0.5, linestyle='None')
+            plt.plot(true_t['x'].iloc[-1], true_t['y'].iloc[-1], marker='X', color=color,
+                    markersize=20, label=f'End T{target_id}', alpha=0.5, linestyle='None')
         
         plt.tick_params(labelsize=22)
         plt.xlabel('X Position', fontsize=30)
         plt.ylabel('Y Position', fontsize=30)
-        #plt.title('JPDAF Tracking Result - 2D Trajectory', fontsize=20, fontweight='bold')
+        
+        # 凡例の重複を避ける等の処理が必要ならここで行う
         plt.legend(loc='best', fontsize=20, bbox_to_anchor=(1.05, 1))
         plt.grid(True, alpha=0.3)
-        #plt.axis('equal')
-        #plt.tick_params(axis='both', labelsize=25)
-        # ここに追加します
+        
+        # 範囲指定（データに合わせて調整が必要かもしれません）
         plt.xlim(-40, -30)
-        plt.ylim(14,16)
+        plt.ylim(14, 16)
         
         if save_path:
             plt.savefig(save_path, dpi=300, bbox_inches='tight')
@@ -83,8 +97,6 @@ class ResultVisualizer:
         
         plt.tight_layout()
         plt.show()
-
-    # (plot_trajectory_with_gates はJPDAFでは複雑になるため省略)
     
     def plot_position_error(self, save_path: str = None):
         """位置誤差の時間変化をプロット (複数ターゲット対応)"""
@@ -120,6 +132,33 @@ class ResultVisualizer:
         plt.tight_layout()
         plt.show()
 
+    def plot_vx_comparison(self, save_path: str = None):
+        """vxを時間軸で比較するプロット"""
+        true_traj, est_traj, measurements, _ = self.load_data()
+
+        plt.figure(figsize=(12, 8))
+
+        # 真の軌道のvx
+        plt.plot(true_traj['time'], true_traj['velocity'], '-', linewidth=2, label='True vx', color='blue')
+
+        # 推定軌道のvx
+        plt.plot(est_traj['time'], est_traj['vx'], '--', linewidth=2, label='Estimated vx', color='red')
+
+        # 観測データのvx
+        plt.plot(measurements['time'], measurements['velocity'], ':', linewidth=2, label='Measurements vx', color='green')
+
+        plt.xlabel('Time', fontsize=20)
+        plt.ylabel('vx', fontsize=20)
+        plt.legend(loc='best', fontsize=15)
+        plt.grid(True, alpha=0.3)
+
+        if save_path:
+            plt.savefig(save_path, dpi=300, bbox_inches='tight')
+            print(f"vx comparison plot saved to {save_path}")
+
+        plt.tight_layout()
+        plt.show()
+
     # (plot_position_components, plot_velocity_components も同様に target_id で分割可能)
 
 def main_visualize():
@@ -135,6 +174,9 @@ def main_visualize():
     
     #print("Plotting position error...")
     #visualizer.plot_position_error()
+    
+    print("Plotting vx comparison...")
+    visualizer.plot_vx_comparison()
 
 if __name__ == "__main__":
     # 可視化を実行する場合は、main.py とは別に実行してください

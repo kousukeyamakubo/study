@@ -20,10 +20,10 @@ class ResultSaver:
         
         with open(filepath, "w", newline="") as f:
             writer = csv.writer(f)
-            writer.writerow(["time", "target_id", "x", "y", "vx", "vy"])
+            writer.writerow(["time", "target_id", "x", "y","range", "angle", "velocity"])
             for i, trajectory in enumerate(trajectories):
                 for t, state in enumerate(trajectory):
-                    writer.writerow([t, i, state[0], state[1], state[2], state[3]])
+                    writer.writerow([t, i, state[0], state[1], state[2], state[3], state[4]])
         
         print(f"True trajectory saved to {filepath}")
     
@@ -49,11 +49,11 @@ class ResultSaver:
         
         with open(filepath, "w", newline="") as f:
             writer = csv.writer(f)
-            writer.writerow(["time", "measurement_id", "x", "y"])
-            # JPDAFでは time=0 は観測がないため t+1
+            writer.writerow(["time", "range", "angle", "x","y", "velocity"])
+            # JPDAFでは time=0 は観測がないため t+1??????????
             for t, measurements in enumerate(measurements_list):
                 for j, z in enumerate(measurements):
-                    writer.writerow([t + 1, j, z[0], z[1]])
+                    writer.writerow([t, z[0], z[1],z[2],z[3],z[4]])
         
         print(f"Measurements saved to {filepath}")
     
