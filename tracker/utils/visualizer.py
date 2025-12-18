@@ -81,11 +81,11 @@ class ResultVisualizer:
             plt.plot(true_t['x'].iloc[-1], true_t['y'].iloc[-1], marker='X', color=color,
                     markersize=20, label=f'End T{target_id}', alpha=0.5, linestyle='None')
             
-            # measurements（観測点）をプロットする（必要なら）
-            if show_measurements and measurements is not None and not measurements.empty:
-                # measurements CSV に target_id が含まれていない前提で全観測点を散布
-                plt.scatter(measurements['x'], measurements['y'], s=25, c='gray', marker='x',
-                    alpha=0.7, label='Measurements')
+            # measurements はループ外で一度だけプロットする（凡例重複回避のため）
+        if show_measurements and measurements is not None and not measurements.empty:
+            # measurements を他のプロットより前面に出し、見やすく大きめの緑丸にする
+            plt.scatter(measurements['x'], measurements['y'], s=140, c='green', marker='o',
+                        edgecolors='k', linewidths=0.5, alpha=0.95, label='Measurements', zorder=10)
         plt.tick_params(labelsize=22)
         plt.xlabel('X Position', fontsize=30)
         plt.ylabel('Y Position', fontsize=30)
@@ -96,7 +96,7 @@ class ResultVisualizer:
         
         # 範囲指定（データに合わせて調整が必要かもしれません）
         plt.xlim(-40, -30)
-        plt.ylim(10, 16)
+        plt.ylim(10, 20)
         
         if save_path:
             plt.savefig(save_path, dpi=300, bbox_inches='tight')
