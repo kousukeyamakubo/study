@@ -1,6 +1,7 @@
 import math
 import numpy as np
 import pandas as pd
+from pathlib import Path
 
 
 def find_col(df, hints):
@@ -28,11 +29,15 @@ def compute_rmse(diffs):
 
 
 def main():
-    base = r"c:\Users\kosuke\study\tracker"
+    base = Path(__file__).resolve().parent.parent
+    """
     true_path = base + "\\true_data.csv"
     meas_path = base + "\\measurements.csv"
     est_path = base + "\\csv_result\\estimated_trajectory.csv"
-
+    """
+    true_path = base / "true_data.csv"
+    meas_path  = base / "measurements.csv"
+    est_path   = base / "csv_result" / "estimated_trajectory.csv"
     true_df = load_csv(true_path)
     meas_df = load_csv(meas_path)
     est_df = load_csv(est_path)
