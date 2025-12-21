@@ -96,7 +96,7 @@ class ResultVisualizer:
         
         # 範囲指定（データに合わせて調整が必要かもしれません）
         plt.xlim(-40, -30)
-        plt.ylim(10, 20)
+        plt.ylim(12, 18)
         
         if save_path:
             plt.savefig(save_path, dpi=300, bbox_inches='tight')
@@ -143,13 +143,62 @@ class ResultVisualizer:
         """vxを時間軸で比較するプロット"""
         true_traj, est_traj, measurements, _ = self.load_data()
 
+        # --- 修正: ターゲット0のみにデータを絞り込む ---
+        target_id = 0
+        
+        # 真値と推定値のフィルタリング
+        true_traj = true_traj[true_traj['target_id'] == target_id]
+        est_traj = est_traj[est_traj['target_id'] == target_id]
+        
+        # 観測値にtarget_id列がある場合はフィルタリング (ない場合はそのまま全表示)
+        if 'target_id' in measurements.columns:
+            measurements = measurements[measurements['target_id'] == target_id]
+            
+        # --- 推定値の視線速度 (Radial Velocity) を計算 ---
+        # レーダー座標 (指定値)
+        radar_pos = np.array([250, -18, 50])
+        
+        # 推定軌道 (x, y, vx, vy) から視線速度を算出
+        # 真値(velocity)が正の値で、rangeが減少(接近)しているデータのようなので、
+        # 「レーダーに向かう方向（接近）」を正の速度として計算します。
+        
+        est_radial_vel = []
+        for _, row in est_traj.iterrows():
+            # ターゲット位置 (z=0と仮定)
+            tx, ty = row['x'], row['y']
+            
+            # Target -> Radar へのベクトル (接近方向)
+            dx = radar_pos[0] - tx
+            dy = radar_pos[1] - ty
+            dz = radar_pos[2] - 0 
+            
+            dist = np.sqrt(dx**2 + dy**2 + dz**2)
+            
+            # 推定速度ベクトル (vx, vy, 0)
+            vx = row['vx']
+            vy = row['vy']
+            
+            # 視線速度 = 速度ベクトルの、レーダー方向への射影
+            # v_radial = (vec_v . vec_r) / |vec_r|
+            if dist > 1e-6:
+                v_r = (vx * dx + vy * dy) / dist
+            else:
+                v_r = 0.0
+            est_radial_vel.append(v_r)
+            
+        # 計算結果をデータフレームに追加
+        est_traj = est_traj.copy()
+        est_traj['radial_velocity'] = est_radial_vel
+        # ----------------------------------------------
+        
         plt.figure(figsize=(12, 8))
 
         # 真の軌道のvx
         plt.plot(true_traj['time'], true_traj['velocity'], '-', linewidth=2, label='True vx', color='blue')
 
         # 推定軌道のvx
-        plt.plot(est_traj['time'], est_traj['vx'], '--', linewidth=2, label='Estimated vx', color='red')
+        #plt.plot(est_traj['time'], est_traj['vx'], '--', linewidth=2, label='Estimated vx', color='red')
+        plt.plot(est_traj['time'], est_traj['radial_velocity'], '--', linewidth=2, label='Estimated Radial Velocity', color='red')
 
         # 観測データのvx
         plt.plot(measurements['time'], measurements['velocity'], ':', linewidth=2, label='Measurements vx', color='green')
