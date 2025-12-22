@@ -154,6 +154,15 @@ class ResultVisualizer:
         if 'target_id' in measurements.columns:
             measurements = measurements[measurements['target_id'] == target_id]
             
+        # --- ★追加修正: 観測データの開始時刻に合わせて表示範囲を制限 ---
+        if not measurements.empty:
+            # 観測データが存在する最初の時刻を取得 (例: t=2)
+            start_time = measurements['time'].min()
+            
+            # 推定値と真値を、その時刻以降のデータのみに絞り込む
+            est_traj = est_traj[est_traj['time'] >= start_time]
+            #true_traj = true_traj[true_traj['time'] >= start_time]
+        # -------------------------------------------------------
         # --- 推定値の視線速度 (Radial Velocity) を計算 ---
         # レーダー座標 (指定値)
         radar_pos = np.array([250, -18, 50])

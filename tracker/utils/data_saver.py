@@ -37,8 +37,14 @@ class ResultSaver:
             writer.writerow(["time", "target_id", "x", "y", "vx", "vy", "cov_xx", "cov_yy"])
             for i, trajectory in enumerate(trajectories):
                 for t, state in enumerate(trajectory):
-                    writer.writerow([t, i, state.mean[0], state.mean[1], state.mean[2], 
-                                   state.mean[3], state.covariance[0, 0], state.covariance[1, 1]])
+                    # 修正ポイント(12/22)
+                    if state is None:
+                        continue
+                    else:
+                        writer.writerow([t, i, state.mean[0], state.mean[1], state.mean[2], 
+                                    state.mean[3], state.covariance[0, 0], state.covariance[1, 1]])
+                    """writer.writerow([t, i, state.mean[0], state.mean[1], state.mean[2], 
+                                    state.mean[3], state.covariance[0, 0], state.covariance[1, 1]])"""
         
         print(f"Estimated trajectory saved to {filepath}")
     
