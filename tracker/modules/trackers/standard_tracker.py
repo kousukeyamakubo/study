@@ -56,7 +56,7 @@ class StandardTracker(ITracker):
             # 全ての観測を新規トラックとして登録して返す
             new_tracks = []
             for z in measurements:
-                new_tracks.append(self._init_new_track(z[2:4]))
+                new_tracks.append(self._init_new_track(z))
             return new_tracks, [] # infoは空で返す
         
         # 観測がない場合は予測状態をそのまま返す
@@ -138,7 +138,7 @@ class StandardTracker(ITracker):
             if is_assigned[j] == 0:
                 # 誰とも紐付かなかった観測 j -> 新規トラックへ
                 z = measurements[j]
-                new_track = self._init_new_track(z[2:4])
+                new_track = self._init_new_track(z)
                 updated_states.append(new_track)
                 
                 # 必要ならログ出力
@@ -151,9 +151,28 @@ class StandardTracker(ITracker):
             観測値から新しいトラックを生成するヘルパーメソッド
             (ここを追加し忘れていたのがエラーの原因です)
             """
-            # 位置は観測値、速度は0で初期化
-            # z = [x, y] を想定 -> [x, y, 0, 0]
-            init_mean = np.array([z[0], z[1], 0.0, 0.0]) 
+            if len(z) >= 5:
+                x = z[2]
+                y = z[3]
+                velocity = z[4]
+                angle = z[1]
+                #angle = np.deg2rad(z[1])  # 角度をラジアンに変換
+                # 速度成分の初期化
+                # ここでは単純に観測された速度(Velocity)が観測角度(Angle)方向に向いていると仮定して分解します
+                # ※ターゲットの移動方向が位置ベクトルと一致しない場合（横切る場合など）は誤差になりますが、
+                #   情報がない場合の初期値としては0よりは有効な場合があります。
+                vx = -velocity * np.cos(angle)
+                vy = velocity * np.sin(angle)
+                init_mean = np.array([x, y, vx, vy])
+            else:
+                # 従来のフォールバック（または情報が足りない場合）
+                # z が [x, y] の場合など
+                if len(z) == 2:
+                    init_mean = np.array([z[0], z[1], 0.0, 0.0])
+                else:
+                    # z が [Range, Angle, X, Y] 等で Velocity がない場合
+                    # あるいは安全策として
+                    init_mean = np.array([z[2], z[3], 0.0, 0.0])
             
             # 共分散の初期値
             # 位置の分散は観測ノイズR程度、速度の分散は「わからない」ので大きくする
