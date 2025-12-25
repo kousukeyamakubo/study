@@ -43,8 +43,9 @@ class ResultVisualizer:
         
         return true_traj, est_traj, measurements, validated
     
-    def plot_trajectory_2d(self, save_path: str = None, show_measurements: bool = True):
-        """2次元軌道をプロット (複数ターゲット対応)"""
+    #def plot_trajectory_2d(self, save_path: str = None, show_measurements: bool = True):
+        """
+        #2次元軌道をプロット (複数ターゲット対応)
         true_traj, est_traj, measurements, _ = self.load_data()
         
         plt.figure(figsize=(12, 10))
@@ -87,8 +88,8 @@ class ResultVisualizer:
             plt.scatter(measurements['x'], measurements['y'], s=140, c='green', marker='o',
                         edgecolors='k', linewidths=0.5, alpha=0.95, label='Measurements', zorder=10)
         plt.tick_params(labelsize=22)
-        plt.xlabel('X Position', fontsize=30)
-        plt.ylabel('Y Position', fontsize=30)
+        plt.xlabel('X Position', fontsize=40)
+        plt.ylabel('Y Position', fontsize=40)
         
         # 凡例の重複を避ける等の処理が必要ならここで行う
         plt.legend(loc='best', fontsize=20, bbox_to_anchor=(1.05, 1))
@@ -96,7 +97,13 @@ class ResultVisualizer:
         
         # 範囲指定（データに合わせて調整が必要かもしれません）
         plt.xlim(-40, -30)
-        plt.ylim(14, 16)
+        plt.ylim(14.7, 15.3)
+        
+        # --- ★追加: 目盛りの文字サイズ変更 ---
+        # labelsize=30 で数値を大きくします
+        # pad=10 で軸と数値の間に少し隙間を空けて見やすくします
+        plt.tick_params(axis='both', labelsize=30, pad=10) 
+        # -------------------------------------
         
         if save_path:
             plt.savefig(save_path, dpi=300, bbox_inches='tight')
@@ -104,6 +111,75 @@ class ResultVisualizer:
         
         plt.tight_layout()
         plt.show()
+        """
+    def plot_trajectory_2d(self, save_path: str = None, show_measurements: bool = True):
+        """2次元軌道をプロット (複数ターゲット対応)"""
+        true_traj, est_traj, measurements, _ = self.load_data()
+        
+        plt.figure(figsize=(12, 10))
+        
+        # 存在するターゲットIDのリストを取得してループする
+        unique_target_ids = true_traj['target_id'].unique()
+        # 色の割り当て用にenumerateを使う
+        for idx, target_id in enumerate(unique_target_ids):
+            # 色を循環させる (ターゲットIDが大きくてもエラーにならないように)
+            color = self.colors[idx % len(self.colors)]
+            
+            # 真の軌道 (target_id を使用)
+            true_t = true_traj[true_traj['target_id'] == target_id]
+            
+            # データが存在しない場合のガード（念のため）
+            if true_t.empty:
+                continue
+
+            # 線なし (フォーマット文字列 'o' を削除して warning を解消)
+            plt.plot(true_t['x'], true_t['y'], linewidth=2, color=color,
+                    label=f'True Target {target_id}', marker='o', markersize=10)
+            
+            
+            
+            # 推定軌道
+            est_t = est_traj[est_traj['target_id'] == target_id]
+            if not est_t.empty:
+                plt.plot(est_t['x'], est_t['y'], '--', linewidth=2, color='red',
+                        label=f'Estimated Target {target_id}', marker='s', markersize=10)
+            
+            # 開始点と終了点 (iloc[0]のエラー箇所)
+            plt.plot(true_t['x'].iloc[0], true_t['y'].iloc[0], marker='o', color=color,
+                    markersize=20, label=f'Start T{target_id}', alpha=0.5, linestyle='None')
+            plt.plot(true_t['x'].iloc[-1], true_t['y'].iloc[-1], marker='X', color=color,
+                    markersize=20, label=f'End T{target_id}', alpha=0.5, linestyle='None')
+            
+            # measurements はループ外で一度だけプロットする（凡例重複回避のため）
+        if show_measurements and measurements is not None and not measurements.empty:
+            # measurements を他のプロットより前面に出し、見やすく大きめの緑丸にする
+            plt.scatter(measurements['x'], measurements['y'], s=140, c='green', marker='x',
+                        edgecolors='k', linewidths=3.0, alpha=0.95, label='Measurements', zorder=10)
+        plt.tick_params(labelsize=22)
+        plt.xlabel('X Position[m]', fontsize=40)
+        plt.ylabel('Y Position[m]', fontsize=40)
+        
+        # 凡例の重複を避ける等の処理が必要ならここで行う
+        plt.legend(loc='best', fontsize=20, bbox_to_anchor=(1.05, 1))
+        plt.grid(True, alpha=0.3)
+        
+        # 範囲指定（データに合わせて調整が必要かもしれません）
+        plt.xlim(-40, -30)
+        plt.ylim(14.7, 15.3)
+        
+        # --- ★追加: 目盛りの文字サイズ変更 ---
+        # labelsize=30 で数値を大きくします
+        # pad=10 で軸と数値の間に少し隙間を空けて見やすくします
+        plt.tick_params(axis='both', labelsize=30, pad=10) 
+        # -------------------------------------
+        
+        if save_path:
+            plt.savefig(save_path, dpi=300, bbox_inches='tight')
+            print(f"2D trajectory plot saved to {save_path}")
+        
+        plt.tight_layout()
+        plt.show()
+        
     
     def plot_position_error(self, save_path: str = None):
         """位置誤差の時間変化をプロット (複数ターゲット対応)"""
@@ -123,14 +199,20 @@ class ResultVisualizer:
             error_norm = np.sqrt(error_x**2 + error_y**2)
             
             ax = axes[i, 0]
-            ax.tick_params(axis='both', labelsize=20)
+            ax.tick_params(axis='both', labelsize=40)
             ax.plot(true_t['time'], error_norm, '-', linewidth=2, color=self.colors[i])
             ax.set_ylabel(f'Euclidean Error (Target {i})', fontsize=11)
             ax.grid(True, alpha=0.3)
             if i == 0:
-                ax.set_title('Position Estimation Error', fontsize=14, fontweight='bold')
+                ax.set_title('Position Estimation Error', fontsize=40, fontweight='bold')
             if i == num_targets - 1:
-                ax.set_xlabel('Time Step', fontsize=11)
+                ax.set_xlabel('Time Step', fontsize=40)
+        
+        # --- ★追加: 目盛りの文字サイズ変更 ---
+        # labelsize=30 で数値を大きくします
+        # pad=10 で軸と数値の間に少し隙間を空けて見やすくします
+        plt.tick_params(axis='both', labelsize=30, pad=10) 
+        # -------------------------------------
         
         if save_path:
             plt.savefig(save_path, dpi=300, bbox_inches='tight')
@@ -212,11 +294,16 @@ class ResultVisualizer:
         # 観測データのvx
         plt.plot(measurements['time'], measurements['velocity'], ':', linewidth=2, label='Measurements vx', color='green')
 
-        plt.xlabel('Time', fontsize=20)
-        plt.ylabel('Estimated Velocity', fontsize=20)
-        plt.legend(loc='best', fontsize=15)
+        plt.xlabel('Time', fontsize=40)
+        plt.ylabel('Estimated Velocity', fontsize=40)
+        plt.legend(loc='best', fontsize=35)
         plt.grid(True, alpha=0.3)
         
+        # --- ★追加: 目盛りの文字サイズ変更 ---
+        # labelsize=30 で数値を大きくします
+        # pad=10 で軸と数値の間に少し隙間を空けて見やすくします
+        plt.tick_params(axis='both', labelsize=30, pad=10) 
+        # -------------------------------------
 
         if save_path:
             plt.savefig(save_path, dpi=300, bbox_inches='tight')

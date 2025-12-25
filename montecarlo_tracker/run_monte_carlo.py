@@ -32,7 +32,7 @@ def parse_velocity_rmse(output_str):
 def main():
     # --- 設定 ---
     num_runs = 10  # 実行回数
-    measurements_dir = "2GHz_montecarlo_measurements"  # CSVがあるディレクトリ
+    measurements_dir = "400MHz_montecarlo_measurements"  # CSVがあるディレクトリ
     # ----------------
     
     # 結果格納用リスト
