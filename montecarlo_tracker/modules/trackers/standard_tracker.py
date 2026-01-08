@@ -163,7 +163,7 @@ class StandardTracker(ITracker):
                 # ※ターゲットの移動方向が位置ベクトルと一致しない場合（横切る場合など）は誤差になりますが、
                 #   情報がない場合の初期値としては0よりは有効な場合があります。
 
-                vx = -velocity * np.cos(angle)
+                vx = velocity * np.cos(angle)
                 vy = velocity * np.sin(angle)
                 init_mean = np.array([x, y, vx, vy])
             else:
