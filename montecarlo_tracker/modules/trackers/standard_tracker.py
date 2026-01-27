@@ -155,16 +155,18 @@ class StandardTracker(ITracker):
                 x = z[2]
                 y = z[3]
                 velocity = z[4]
-                angle = np.deg2rad(z[1])
-                #angle = z[1]
+                #angle = np.deg2rad(z[1])
+                angle = z[1]
                 
                 # 速度成分の初期化
                 # ここでは単純に観測された速度(Velocity)が観測角度(Angle)方向に向いていると仮定して分解します
                 # ※ターゲットの移動方向が位置ベクトルと一致しない場合（横切る場合など）は誤差になりますが、
                 #   情報がない場合の初期値としては0よりは有効な場合があります。
-
-                vx = velocity * np.cos(angle)
-                vy = velocity * np.sin(angle)
+                print(angle)
+                print(velocity)
+                vx = velocity * np.cos(np.radians(angle))
+                vy = velocity * np.sin(np.radians(angle))
+                print("vx:",vx)
                 init_mean = np.array([x, y, vx, vy])
             else:
                 # 従来のフォールバック（または情報が足りない場合）

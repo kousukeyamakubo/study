@@ -5,6 +5,7 @@ import seaborn as sns # 色分けのため
 from matplotlib.patches import Ellipse
 from pathlib import Path
 from typing import Tuple
+import math
 
 
 class ResultVisualizer:
@@ -40,78 +41,30 @@ class ResultVisualizer:
         validated = None
         if validated_path.exists():
             validated = pd.read_csv(validated_path)
-        
+
+        # --- 観測データの分解: 単一の速度成分 (velocity) と角度 (angle) がある場合、
+        #     推定値と同様に x,y 方向の速度成分 `vx`/`vy` を追加する。
+        def _decompose(df: pd.DataFrame) -> pd.DataFrame:
+            if df is None or df.empty:
+                return df
+            df = df.copy()
+            # velocity と angle が存在し、vx/vy が無ければ計算する
+            if 'vx' not in df.columns and 'vy' not in df.columns:
+                if 'velocity' in df.columns and 'angle' in df.columns:
+                    # 角度はラジアンである想定
+                    print(df['velocity'][0])
+                    print('--------')
+                    print(df['angle'][0])
+                    df['vx'] = df['velocity'] * np.cos(np.radians(df['angle']))
+                    df['vy'] = df['velocity'] * np.sin(np.radians(df['angle']))
+            return df
+
+        measurements = _decompose(measurements)
+        if validated is not None:
+            validated = _decompose(validated)
+
         return true_traj, est_traj, measurements, validated
     
-    #def plot_trajectory_2d(self, save_path: str = None, show_measurements: bool = True):
-        """
-        #2次元軌道をプロット (複数ターゲット対応)
-        true_traj, est_traj, measurements, _ = self.load_data()
-        
-        plt.figure(figsize=(12, 10))
-        
-        # 存在するターゲットIDのリストを取得してループする
-        unique_target_ids = true_traj['target_id'].unique()
-        # 色の割り当て用にenumerateを使う
-        for idx, target_id in enumerate(unique_target_ids):
-            # 色を循環させる (ターゲットIDが大きくてもエラーにならないように)
-            color = self.colors[idx % len(self.colors)]
-            
-            # 真の軌道 (target_id を使用)
-            true_t = true_traj[true_traj['target_id'] == target_id]
-            
-            # データが存在しない場合のガード（念のため）
-            if true_t.empty:
-                continue
-
-            # 線なし (フォーマット文字列 'o' を削除して warning を解消)
-            plt.plot(true_t['x'], true_t['y'], linewidth=2, color=color,
-                    label=f'True Target {target_id}', marker='o', markersize=10)
-            
-            
-            
-            # 推定軌道
-            est_t = est_traj[est_traj['target_id'] == target_id]
-            if not est_t.empty:
-                plt.plot(est_t['x'], est_t['y'], '--', linewidth=2, color='red',
-                        label=f'Estimated Target {target_id}', marker='s', markersize=10)
-            
-            # 開始点と終了点 (iloc[0]のエラー箇所)
-            plt.plot(true_t['x'].iloc[0], true_t['y'].iloc[0], marker='o', color=color,
-                    markersize=20, label=f'Start T{target_id}', alpha=0.5, linestyle='None')
-            plt.plot(true_t['x'].iloc[-1], true_t['y'].iloc[-1], marker='X', color=color,
-                    markersize=20, label=f'End T{target_id}', alpha=0.5, linestyle='None')
-            
-            # measurements はループ外で一度だけプロットする（凡例重複回避のため）
-        if show_measurements and measurements is not None and not measurements.empty:
-            # measurements を他のプロットより前面に出し、見やすく大きめの緑丸にする
-            plt.scatter(measurements['x'], measurements['y'], s=140, c='green', marker='o',
-                        edgecolors='k', linewidths=0.5, alpha=0.95, label='Measurements', zorder=10)
-        plt.tick_params(labelsize=22)
-        plt.xlabel('X Position', fontsize=40)
-        plt.ylabel('Y Position', fontsize=40)
-        
-        # 凡例の重複を避ける等の処理が必要ならここで行う
-        plt.legend(loc='best', fontsize=20, bbox_to_anchor=(1.05, 1))
-        plt.grid(True, alpha=0.3)
-        
-        # 範囲指定（データに合わせて調整が必要かもしれません）
-        plt.xlim(-40, -30)
-        plt.ylim(14.7, 15.3)
-        
-        # --- ★追加: 目盛りの文字サイズ変更 ---
-        # labelsize=30 で数値を大きくします
-        # pad=10 で軸と数値の間に少し隙間を空けて見やすくします
-        plt.tick_params(axis='both', labelsize=30, pad=10) 
-        # -------------------------------------
-        
-        if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            print(f"2D trajectory plot saved to {save_path}")
-        
-        plt.tight_layout()
-        plt.show()
-        """
     def plot_trajectory_2d(self, save_path: str = None, show_measurements: bool = True):
         """2次元軌道をプロット (複数ターゲット対応)"""
         true_traj, est_traj, measurements, _ = self.load_data()
@@ -156,16 +109,16 @@ class ResultVisualizer:
             plt.scatter(measurements['x'], measurements['y'], s=140, c='green', marker='x',
                         edgecolors='k', linewidths=3.0, alpha=0.95, label='Measurements', zorder=10)
         plt.tick_params(labelsize=22)
-        plt.xlabel('X Position[m]', fontsize=40)
-        plt.ylabel('Y Position[m]', fontsize=40)
+        plt.xlabel('X[m]', fontsize=40)
+        plt.ylabel('Y[m]', fontsize=40)
         
         # 凡例の重複を避ける等の処理が必要ならここで行う
-        plt.legend(loc='best', fontsize=20, bbox_to_anchor=(1.05, 1))
+        #plt.legend(loc='best', fontsize=20, bbox_to_anchor=(1.05, 1))
         plt.grid(True, alpha=0.3)
         
         # 範囲指定（データに合わせて調整が必要かもしれません）
         plt.xlim(-40, -30)
-        plt.ylim(14.7, 15.3)
+        plt.ylim(14.5, 15.5)
         
         # --- ★追加: 目盛りの文字サイズ変更 ---
         # labelsize=30 で数値を大きくします
@@ -288,15 +241,22 @@ class ResultVisualizer:
         plt.plot(true_traj['time'], true_traj['velocity'], '-', linewidth=2, label='True vx', color='blue')
 
         # 推定軌道のvx
-        #plt.plot(est_traj['time'], est_traj['vx'], '--', linewidth=2, label='Estimated vx', color='red')
-        plt.plot(est_traj['time'], est_traj['radial_velocity'], '--', linewidth=2, label='Estimated Radial Velocity', color='red')
+        #plt.plot(est_traj['time'], est_traj['velocity'], '--', linewidth=2, label='Estimated vx', color='red')
+        plt.plot(est_traj['time'], est_traj['vx'], '--', linewidth=2, label='Estimated Radial Velocity', color='red')
 
         # 観測データのvx
-        plt.plot(measurements['time'], measurements['velocity'], ':', linewidth=2, label='Measurements vx', color='green')
+        # 観測データのvx（分解済みの成分を使用）
+        if 'vx' in measurements.columns:
+            print('デバッグ')
+            plt.plot(measurements['time'], measurements['vx'], ':', linewidth=2, label='Measurements vx', color='green')
+            print(measurements['vx'][0])
+        else:
+            # フォールバック: もし分解されていなければ元の速度スカラーを表示
+            plt.plot(measurements['time'], measurements['velocity'], ':', linewidth=2, label='Measurements (velocity)', color='green')
 
-        plt.xlabel('Time', fontsize=40)
-        plt.ylabel('Estimated Velocity', fontsize=40)
-        plt.legend(loc='best', fontsize=35)
+        plt.xlabel('Time[s]', fontsize=40)
+        plt.ylabel('Estimated Velocity[m/s]', fontsize=40)
+        #plt.legend(loc='best', fontsize=35)
         plt.grid(True, alpha=0.3)
         
         # --- ★追加: 目盛りの文字サイズ変更 ---

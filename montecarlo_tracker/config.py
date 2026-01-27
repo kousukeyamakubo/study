@@ -43,5 +43,11 @@ class Config:
     #process_noise_std: float = 0.05    # 0.5 -> 0.05 (動きの滑らかさを重視)
     #measurement_noise_std: float = 0.25 # 0.5 -> 0.25 (実測データに合わせる)
     # 推奨設定
-    process_noise_std: float = 0.3      # 0.05 -> 0.1 (動きの変化を許容し、遅れを減らす)
-    measurement_noise_std: float = 0.18 # 0.25 -> 0.23 (実測データ標準偏差に合わせる)
+    #process_noise_std: float = 0.1      # 0.05 -> 0.1 (動きの変化を許容し、遅れを減らす)
+    #measurement_noise_std: float = 0.23 # 0.25 -> 0.23 (実測データ標準偏差に合わせる)
+    # SeMIのとき
+    #process_noise_std: float = 0.3      # 0.05 -> 0.1 (動きの変化を許容し、遅れを減らす)
+    #measurement_noise_std: float = 0.18 # 0.25 -> 0.23 (実測データ標準偏差に合わせる)
+
+    process_noise_std: float = 1.0
+    measurement_noise_std: float = 1.0

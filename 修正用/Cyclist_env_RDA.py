@@ -160,7 +160,11 @@ class cals():
         return cy_range, ve_range, rp_range
     
     def anglecal(self):
+        #refangle = np.arctan(33/265)/2
         refangle = np.arctan(33/265)/2
+        angle_offset = 0
+        #angle_offset = -0.00005
+        refangle = refangle + angle_offset
         if len(self.cy)!=0 :
             cy_denum = self.bs[0] - self.cy[:,0]
             cy_nu = self.cy[:,1] - self.bs[1]
