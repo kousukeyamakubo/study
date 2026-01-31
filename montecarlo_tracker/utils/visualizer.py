@@ -117,8 +117,8 @@ class ResultVisualizer:
         plt.grid(True, alpha=0.3)
         
         # 範囲指定（データに合わせて調整が必要かもしれません）
-        plt.xlim(-40, -30)
-        plt.ylim(14.5, 15.5)
+        #plt.xlim(-40, -30)
+        #plt.ylim(14.5, 15.5)
         
         # --- ★追加: 目盛りの文字サイズ変更 ---
         # labelsize=30 で数値を大きくします
