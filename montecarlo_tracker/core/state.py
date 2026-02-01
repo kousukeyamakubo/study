@@ -6,7 +6,9 @@ class GaussianState:
     """ガウス分布で表現される状態"""
     mean: np.ndarray  # 状態ベクトル
     covariance: np.ndarray  # 共分散行列
-    
+    miss_count: int = 0 # 未検出カウンタ
+    track_id: int = 0  # トラックID
+
     def __post_init__(self):
         """検証"""
         self.mean = np.asarray(self.mean)

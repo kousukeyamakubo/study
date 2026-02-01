@@ -35,14 +35,9 @@ def create_tracker(cfg: Config, filter: IFilter) -> ITracker:
             detection_prob=cfg.detection_prob
         )
     elif cfg.tracker_type == "GNN":
-        # GNN用ロジックを使用
         association_logic = GNNAssociation(filter)
     else:
         raise ValueError(f"Unknown tracker type: {cfg.tracker_type}")
 
-    # 3. トラッカー本体に注入 (クラスはStandardTrackerのままでOK)
-    # StandardTrackerクラスは「アソシエーション結果(beta)を使って更新する」クラスなので、
-    # betaが0/1(GNN)であっても数式上問題なく動作します。
-    # 名前が気になる場合はクラス名を `StandardTracker` などに変えても良いですが、
-    # そのままでも機能します。
-    return StandardTracker(filter, gating_module, association_logic)
+    # 3. トラッカー本体に注入
+    return StandardTracker(filter, gating_module, association_logic, cfg.max_miss_count)

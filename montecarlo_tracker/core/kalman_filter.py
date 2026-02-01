@@ -33,7 +33,7 @@ class LinearKalmanFilter(IFilter):
         """予測ステップ"""
         predicted_mean = self.F @ state.mean
         predicted_cov = self.F @ state.covariance @ self.F.T + self.Q
-        return GaussianState(predicted_mean, predicted_cov)
+        return GaussianState(predicted_mean, predicted_cov, state.miss_count, state.track_id)
     
     def update(self, predicted_state: GaussianState, measurement: np.ndarray) -> GaussianState:
         """更新ステップ"""
@@ -54,7 +54,7 @@ class LinearKalmanFilter(IFilter):
         updated_mean = predicted_state.mean + K @ innovation
         updated_cov = (np.eye(len(predicted_state.mean)) - K @ self.H) @ predicted_state.covariance
         
-        return GaussianState(updated_mean, updated_cov)
+        return GaussianState(updated_mean, updated_cov, predicted_state.miss_count, predicted_state.track_id)
     
     def likelihood(self, predicted_state: GaussianState, measurement: np.ndarray) -> float:
         """観測尤度を計算"""

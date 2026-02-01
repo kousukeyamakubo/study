@@ -16,6 +16,8 @@ class Config:
     tracker_type: str = "JPDA"        # "JPDA", "GNN", "PDA" ...
     gating_type: str = "Ellipsoidal"  # "Ellipsoidal", "Rectangular" ...
     filter_type: str = "KF"           # "KF" (Linear), "EKF" (Extended)
+
+    max_miss_count: int = 5              # トラック削除までの未検出許容回数
     
     # --- JPDAF / Gating 設定 ---
     gate_threshold: float = 9.21  # カイ二乗分布の閾値

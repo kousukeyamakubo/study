@@ -15,18 +15,21 @@ class StandardTracker(ITracker):
     """
     
     def __init__(self, filter: IFilter, 
-                 gating_module: IGating, 
-                 association_calculator: IAssociation):
+             gating_module: IGating, 
+             association_calculator: IAssociation,
+             max_miss_count: int = 5):  # ← 追加
         """
         Args:
             filter: カルマンフィルタ（状態予測・更新の計算式）
             gating_module: ゲーティング処理を行う部品
             association_calculator: データ割り当て確率計算を行う部品
+            max_miss_count: 連続未検出でトラック削除する閾値
         """
         self.filter = filter
-        # 外部から注入された部品を保持
         self.gating_module = gating_module
         self.association_calculator = association_calculator
+        self.max_miss_count = max_miss_count  # ← 追加
+        self.next_track_id = 0  # トラックIDの初期値(追加)
         
         self.H = filter.H
         self.R = filter.R
@@ -59,9 +62,15 @@ class StandardTracker(ITracker):
                 new_tracks.append(self._init_new_track(z))
             return new_tracks, [] # infoは空で返す
         
-        # 観測がない場合は予測状態をそのまま返す
+        # 観測がない場合は miss_count をインクリメントして閾値チェック
         if num_measurements == 0:
-            return predicted_states, []
+            updated_states = []
+            for state in predicted_states:
+                new_miss_count = state.miss_count + 1
+                # miss_countが閾値未満なら保持
+                if new_miss_count < self.max_miss_count:
+                    updated_states.append(GaussianState(state.mean, state.covariance, new_miss_count))
+            return updated_states, []
             
         # --- ステップ1: ゲーティング (部品に委譲) ---
         validation_matrix = np.zeros((num_targets, num_measurements), dtype=int)
@@ -125,7 +134,13 @@ class StandardTracker(ITracker):
             # 最終的な共分散: P(k|k) = beta_0 * P(k|k-1) + (1 - beta_0) * P_c + P_tilde
             updated_cov = beta_i[0] * state.covariance + (1 - beta_i[0]) * P_c + spread_term
             
-            updated_states.append(GaussianState(updated_mean, updated_cov))
+            # miss_countの更新（デバッグ情報追加版）
+            if validated_indices:  # ゲート内に観測があった場合
+                new_miss_count = 0  # リセット
+            else:  # 観測がなかった場合
+                new_miss_count = state.miss_count + 1
+            
+            updated_states.append(GaussianState(updated_mean, updated_cov, new_miss_count, track_id=state.track_id))
         
         # --- (B) 新規トラック生成 (追加) ---
         # どのトラックのゲートにも入らなかった観測 (validation_matrixの列の和が0) を探す
@@ -133,17 +148,19 @@ class StandardTracker(ITracker):
         # 列方向に足して 0 なら、誰のゲートにも入っていない
         
         is_assigned = validation_matrix.sum(axis=0) # [M]
-        
         for j in range(num_measurements):
             if is_assigned[j] == 0:
                 # 誰とも紐付かなかった観測 j -> 新規トラックへ
                 z = measurements[j]
                 new_track = self._init_new_track(z)
                 updated_states.append(new_track)
-                
-                # 必要ならログ出力
-                # print(f"New track initiated from measurement {j}")
-            
+                print(f"[NEW TRACK CREATED] measurement index {j} -> new track at ({z[2]:.2f}, {z[3]:.2f})")
+            else:
+                print(f"[SKIPPED] measurement {j} is in gate of existing track(s)")
+
+        # --- (C) トラック削除処理 ---
+        # miss_countが閾値以上のトラックを削除
+        updated_states = [s for s in updated_states if s.miss_count < self.max_miss_count]
         return updated_states, validated_measurements_per_target
 
     def _init_new_track(self, z: np.ndarray) -> GaussianState:
@@ -162,11 +179,8 @@ class StandardTracker(ITracker):
                 # ここでは単純に観測された速度(Velocity)が観測角度(Angle)方向に向いていると仮定して分解します
                 # ※ターゲットの移動方向が位置ベクトルと一致しない場合（横切る場合など）は誤差になりますが、
                 #   情報がない場合の初期値としては0よりは有効な場合があります。
-                print(angle)
-                print(velocity)
                 vx = velocity * np.cos(np.radians(angle))
                 vy = velocity * np.sin(np.radians(angle))
-                print("vx:",vx)
                 init_mean = np.array([x, y, vx, vy])
             else:
                 # 従来のフォールバック（または情報が足りない場合）
@@ -186,5 +200,10 @@ class StandardTracker(ITracker):
             v_var = 100.0 # 速度の初期不確かさ（大きめに設定）
             
             init_cov = np.diag([r_var_x, r_var_y, v_var, v_var])
+            # 修正
+            # 新しいトラックIDを割り当て
+            new_track_id = self.next_track_id
+            self.next_track_id += 1  # インクリメント
             
-            return GaussianState(init_mean, init_cov)
+            print(f"[NEW TRACK] Assigned track_id={new_track_id}")
+            return GaussianState(init_mean, init_cov, miss_count=0, track_id=new_track_id)
