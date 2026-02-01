@@ -6,7 +6,7 @@ class Config:
     """シミュレーションおよびアルゴリズム設定用のコンフィグクラス"""
     # --- シミュレーション基本設定 ---
     seed: int = 42
-    num_steps: int = 21
+    num_steps: int = 31
     dt: float = 0.05
     
     # --- 観測データ設定 ---

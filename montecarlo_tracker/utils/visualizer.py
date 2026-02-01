@@ -107,7 +107,13 @@ class ResultVisualizer:
         if show_measurements and measurements is not None and not measurements.empty:
             # measurements を他のプロットより前面に出し、見やすく大きめの緑丸にする
             plt.scatter(measurements['x'], measurements['y'], s=140, c='green', marker='x',
-                        edgecolors='k', linewidths=3.0, alpha=0.95, label='Measurements', zorder=10)
+                edgecolors='k', linewidths=3.0, alpha=0.95, label='Measurements', zorder=10)
+            
+            # 各測定点の近くにタイムステップを数字で表示
+            for _, row in measurements.iterrows():
+                plt.text(row['x'], row['y'], f"{int(row['time'])}", 
+                    fontsize=10, ha='right', va='bottom', 
+                    color='darkgreen', fontweight='bold')
         plt.tick_params(labelsize=22)
         plt.xlabel('X[m]', fontsize=40)
         plt.ylabel('Y[m]', fontsize=40)
