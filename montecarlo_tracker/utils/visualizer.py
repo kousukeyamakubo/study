@@ -71,66 +71,64 @@ class ResultVisualizer:
         
         plt.figure(figsize=(12, 10))
         
-        # 存在するターゲットIDのリストを取得してループする
-        unique_target_ids = true_traj['target_id'].unique()
-        # 色の割り当て用にenumerateを使う
-        for idx, target_id in enumerate(unique_target_ids):
-            # 色を循環させる (ターゲットIDが大きくてもエラーにならないように)
-            color = self.colors[idx % len(self.colors)]
-            
-            # 真の軌道 (target_id を使用)
+        # 真値用：青系、推定値用：赤系の色パレット
+        true_colors = sns.color_palette("Blues_d", 10)   # 真値：青系（濃淡あり）
+        est_colors = sns.color_palette("Reds_d", 10)     # 推定値：赤系（濃淡あり）
+        
+        # 真値と推定値の両方のトラックIDを取得
+        true_target_ids = set(true_traj['target_id'].unique())
+        est_target_ids = set(est_traj['target_id'].unique())
+        all_target_ids = sorted(true_target_ids | est_target_ids)
+        
+        # トラックIDごとに真値用と推定値用の色を割り当てる
+        true_color_map = {tid: true_colors[i % len(true_colors)] for i, tid in enumerate(all_target_ids)}
+        est_color_map = {tid: est_colors[i % len(est_colors)] for i, tid in enumerate(all_target_ids)}
+        
+        # 真の軌道をプロット（青系）
+        for target_id in true_target_ids:
+            color = true_color_map[target_id]
             true_t = true_traj[true_traj['target_id'] == target_id]
             
-            # データが存在しない場合のガード（念のため）
             if true_t.empty:
                 continue
 
-            # 線なし (フォーマット文字列 'o' を削除して warning を解消)
-            plt.plot(true_t['x'], true_t['y'], linewidth=2, color=color,
-                    label=f'True Target {target_id}', marker='o', markersize=10)
+            plt.plot(true_t['x'], true_t['y'], linewidth=3, color=color,
+                    label=f'True Target {target_id}', marker='o', markersize=8)
             
-            
-            
-            # 推定軌道
-            est_t = est_traj[est_traj['target_id'] == target_id]
-            if not est_t.empty:
-                plt.plot(est_t['x'], est_t['y'], '--', linewidth=2, color='red',
-                        label=f'Estimated Target {target_id}', marker='s', markersize=10)
-            
-            # 開始点と終了点 (iloc[0]のエラー箇所)
+            # 開始点と終了点
             plt.plot(true_t['x'].iloc[0], true_t['y'].iloc[0], marker='o', color=color,
-                    markersize=20, label=f'Start T{target_id}', alpha=0.5, linestyle='None')
+                    markersize=15, alpha=0.7, linestyle='None')
             plt.plot(true_t['x'].iloc[-1], true_t['y'].iloc[-1], marker='X', color=color,
-                    markersize=20, label=f'End T{target_id}', alpha=0.5, linestyle='None')
+                    markersize=15, alpha=0.7, linestyle='None')
+        
+        # 推定軌道をプロット（赤系）
+        for target_id in est_target_ids:
+            color = est_color_map[target_id]
+            est_t = est_traj[est_traj['target_id'] == target_id]
             
-            # measurements はループ外で一度だけプロットする（凡例重複回避のため）
+            if not est_t.empty:
+                # 破線で、赤系の色を使用
+                plt.plot(est_t['x'], est_t['y'], '--', linewidth=3, color=color,
+                        label=f'Estimated Track {target_id}', marker='s', markersize=8)
+    
+        # measurements は一度だけプロット
         if show_measurements and measurements is not None and not measurements.empty:
-            # measurements を他のプロットより前面に出し、見やすく大きめの緑丸にする
             plt.scatter(measurements['x'], measurements['y'], s=140, c='green', marker='x',
                 edgecolors='k', linewidths=3.0, alpha=0.95, label='Measurements', zorder=10)
             
             # 各測定点の近くにタイムステップを数字で表示
             for _, row in measurements.iterrows():
-                plt.text(row['x'], row['y'], f"{int(row['time'])}", 
+                # x座標を少し左に、y座標を少し上にオフセット
+                plt.text(row['x'] - 0.1, row['y'] + 0.1, f"{int(row['time'])}", 
                     fontsize=10, ha='right', va='bottom', 
                     color='darkgreen', fontweight='bold')
+    
         plt.tick_params(labelsize=22)
         plt.xlabel('X[m]', fontsize=40)
         plt.ylabel('Y[m]', fontsize=40)
-        
-        # 凡例の重複を避ける等の処理が必要ならここで行う
-        #plt.legend(loc='best', fontsize=20, bbox_to_anchor=(1.05, 1))
         plt.grid(True, alpha=0.3)
         
-        # 範囲指定（データに合わせて調整が必要かもしれません）
-        #plt.xlim(-40, -30)
-        #plt.ylim(14.5, 15.5)
-        
-        # --- ★追加: 目盛りの文字サイズ変更 ---
-        # labelsize=30 で数値を大きくします
-        # pad=10 で軸と数値の間に少し隙間を空けて見やすくします
-        plt.tick_params(axis='both', labelsize=30, pad=10) 
-        # -------------------------------------
+        plt.tick_params(axis='both', labelsize=30, pad=10)
         
         if save_path:
             plt.savefig(save_path, dpi=300, bbox_inches='tight')
@@ -181,104 +179,92 @@ class ResultVisualizer:
         plt.show()
 
     def plot_vx_comparison(self, save_path: str = None):
-        """vxを時間軸で比較するプロット"""
+        """vxを時間軸で比較するプロット（ID=0とそれ以外を分けて表示）"""
         true_traj, est_traj, measurements, _ = self.load_data()
 
-        # --- 修正: ターゲット0のみにデータを絞り込む ---
-        target_id = 0
+        # 真値と推定値の両方のトラックIDを取得
+        true_target_ids = sorted(true_traj['target_id'].unique())
+        est_target_ids = sorted(est_traj['target_id'].unique())
+        all_target_ids = sorted(set(true_target_ids) | set(est_target_ids))
         
-        # 真値と推定値のフィルタリング
-        true_traj = true_traj[true_traj['target_id'] == target_id]
-        est_traj = est_traj[est_traj['target_id'] == target_id]
+        # 2つのサブプロットを作成（上: ID=0, 下: ID≠0）
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 12))
         
-        # 観測値にtarget_id列がある場合はフィルタリング (ない場合はそのまま全表示)
-        if 'target_id' in measurements.columns:
-            measurements = measurements[measurements['target_id'] == target_id]
-            
-        # --- ★追加修正: 観測データの開始時刻に合わせて表示範囲を制限 ---
-        if not measurements.empty:
-            # 観測データが存在する最初の時刻を取得 (例: t=2)
-            start_time = measurements['time'].min()
-            
-            # 推定値と真値を、その時刻以降のデータのみに絞り込む
-            est_traj = est_traj[est_traj['time'] >= start_time]
-            #true_traj = true_traj[true_traj['time'] >= start_time]
-        # -------------------------------------------------------
-        # --- 推定値の視線速度 (Radial Velocity) を計算 ---
-        # レーダー座標 (指定値)
+        # レーダー座標
         radar_pos = np.array([250, -18, 50])
         
-        # 推定軌道 (x, y, vx, vy) から視線速度を算出
-        # 真値(velocity)が正の値で、rangeが減少(接近)しているデータのようなので、
-        # 「レーダーに向かう方向（接近）」を正の速度として計算します。
+        # トラックIDごとに異なる色を割り当て（測定値用）
+        colors = sns.color_palette("husl", len(all_target_ids))
         
-        est_radial_vel = []
-        for _, row in est_traj.iterrows():
-            # ターゲット位置 (z=0と仮定)
-            tx, ty = row['x'], row['y']
+        for idx, target_id in enumerate(all_target_ids):
+            color = colors[idx]
             
-            # Target -> Radar へのベクトル (接近方向)
-            dx = radar_pos[0] - tx
-            dy = radar_pos[1] - ty
-            dz = radar_pos[2] - 0 
+            # プロット先のaxを選択（ID=0なら上のグラフ、それ以外なら下のグラフ）
+            ax = ax1 if target_id == 0 else ax2
             
-            dist = np.sqrt(dx**2 + dy**2 + dz**2)
+            # データのフィルタリング
+            true_t = true_traj[true_traj['target_id'] == target_id]
+            est_t = est_traj[est_traj['target_id'] == target_id]
             
-            # 推定速度ベクトル (vx, vy, 0)
-            vx = row['vx']
-            vy = row['vy']
-            
-            # 視線速度 = 速度ベクトルの、レーダー方向への射影
-            # v_radial = (vec_v . vec_r) / |vec_r|
-            if dist > 1e-6:
-                v_r = (vx * dx + vy * dy) / dist
+            if 'target_id' in measurements.columns:
+                meas_t = measurements[measurements['target_id'] == target_id]
             else:
-                v_r = 0.0
-            est_radial_vel.append(v_r)
+                meas_t = measurements.copy()
             
-        # 計算結果をデータフレームに追加
-        est_traj = est_traj.copy()
-        est_traj['radial_velocity'] = est_radial_vel
-        # ----------------------------------------------
+            # 推定値の視線速度を計算
+            est_radial_vel = []
+            for _, row in est_t.iterrows():
+                tx, ty = row['x'], row['y']
+                dx = radar_pos[0] - tx
+                dy = radar_pos[1] - ty
+                dz = radar_pos[2] - 0 
+                dist = np.sqrt(dx**2 + dy**2 + dz**2)
+                vx = row['vx']
+                vy = row['vy']
+                
+                if dist > 1e-6:
+                    v_r = (vx * dx + vy * dy) / dist
+                else:
+                    v_r = 0.0
+                est_radial_vel.append(v_r)
+            
+            est_t = est_t.copy()
+            est_t['radial_velocity'] = est_radial_vel
+            
+            # プロット（真値は青色、推定値は赤色に統一）
+            if not true_t.empty:
+                ax.plot(true_t['time'], true_t['velocity'], '-', linewidth=3, 
+                       label=f'True ID={target_id}', color='blue')
+            
+            if not est_t.empty:
+                ax.plot(est_t['time'], est_t['radial_velocity'], '--', linewidth=3, 
+                       label=f'Est. ID={target_id}', color='red', alpha=0.8)
+            
+            if not meas_t.empty and 'vx' in meas_t.columns:
+                ax.plot(meas_t['time'], meas_t['vx'], ':', linewidth=2.5, 
+                       label=f'Meas. ID={target_id}', color=color, alpha=0.6)
+    
+        # 上のグラフ（ID=0）の設定
+        ax1.set_ylabel('Velocity [m/s]', fontsize=35)
+        ax1.legend(loc='best', fontsize=20, ncol=2)
+        ax1.grid(True, alpha=0.3)
+        ax1.tick_params(axis='both', labelsize=28, pad=10)
+        ax1.set_title('Velocity Comparison (ID=0)', fontsize=38, fontweight='bold')
         
-        plt.figure(figsize=(12, 8))
-
-        # 真の軌道のvx
-        plt.plot(true_traj['time'], true_traj['velocity'], '-', linewidth=2, label='True vx', color='blue')
-
-        # 推定軌道のvx
-        #plt.plot(est_traj['time'], est_traj['velocity'], '--', linewidth=2, label='Estimated vx', color='red')
-        plt.plot(est_traj['time'], est_traj['vx'], '--', linewidth=2, label='Estimated Radial Velocity', color='red')
-
-        # 観測データのvx
-        # 観測データのvx（分解済みの成分を使用）
-        if 'vx' in measurements.columns:
-            print('デバッグ')
-            plt.plot(measurements['time'], measurements['vx'], ':', linewidth=2, label='Measurements vx', color='green')
-            print(measurements['vx'][0])
-        else:
-            # フォールバック: もし分解されていなければ元の速度スカラーを表示
-            plt.plot(measurements['time'], measurements['velocity'], ':', linewidth=2, label='Measurements (velocity)', color='green')
-
-        plt.xlabel('Time[s]', fontsize=40)
-        plt.ylabel('Estimated Velocity[m/s]', fontsize=40)
-        #plt.legend(loc='best', fontsize=35)
-        plt.grid(True, alpha=0.3)
+        # 下のグラフ（ID≠0）の設定
+        ax2.set_xlabel('Time [s]', fontsize=35)
+        ax2.set_ylabel('Velocity [m/s]', fontsize=35)
+        ax2.legend(loc='best', fontsize=20, ncol=2)
+        ax2.grid(True, alpha=0.3)
+        ax2.tick_params(axis='both', labelsize=28, pad=10)
+        ax2.set_title('Velocity Comparison (ID≠0)', fontsize=38, fontweight='bold')
         
-        # --- ★追加: 目盛りの文字サイズ変更 ---
-        # labelsize=30 で数値を大きくします
-        # pad=10 で軸と数値の間に少し隙間を空けて見やすくします
-        plt.tick_params(axis='both', labelsize=30, pad=10) 
-        # -------------------------------------
-
         if save_path:
             plt.savefig(save_path, dpi=300, bbox_inches='tight')
             print(f"vx comparison plot saved to {save_path}")
-
+        
         plt.tight_layout()
         plt.show()
-
-    # (plot_position_components, plot_velocity_components も同様に target_id で分割可能)
 
 def main_visualize():
     """可視化メイン関数"""

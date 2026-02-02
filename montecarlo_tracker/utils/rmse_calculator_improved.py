@@ -1,177 +1,235 @@
-import math
 import numpy as np
 import pandas as pd
 from pathlib import Path
+from typing import Tuple, Dict, List, Optional
 
-# ==========================================
-# 設定: 成功とみなす誤差の閾値 (m)
-SUCCESS_THRESHOLD = 1.0 
-# ==========================================
 
-def find_col(df, hints):
-    cols = {c.lower(): c for c in df.columns}
-    for h in hints:
-        if h in cols:
-            return cols[h]
-    for h in hints:
-        for lc, orig in cols.items():
-            if h in lc:
-                return orig
-    return None
+class RMSEComparator:
+    """真値と推定値・測定値のRMSEを比較するクラス"""
+    
+    def __init__(self, csv_dir: str = "csv_result", distance_threshold: float = 5.0):
+        """
+        Args:
+            csv_dir: CSVファイルのディレクトリ
+            distance_threshold: マッチング閾値（メートル）。この距離より近いものがなければ検出漏れとする
+        """
+        self.csv_dir = Path(csv_dir)
+        if not self.csv_dir.exists():
+            raise FileNotFoundError(f"Directory {csv_dir} does not exist")
+        self.distance_threshold = distance_threshold
+    
+    def load_data(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        """CSVファイルからデータを読み込む"""
+        true_traj = pd.read_csv(self.csv_dir / "true_trajectory.csv")
+        est_traj = pd.read_csv(self.csv_dir / "estimated_trajectory.csv")
+        measurements = pd.read_csv(self.csv_dir / "measurements.csv")
+        
+        # 測定値にvx, vyがない場合は計算
+        if 'vx' not in measurements.columns and 'velocity' in measurements.columns and 'angle' in measurements.columns:
+            measurements['vx'] = measurements['velocity'] * np.cos(np.radians(measurements['angle']))
+            measurements['vy'] = measurements['velocity'] * np.sin(np.radians(measurements['angle']))
+        
+        return true_traj, est_traj, measurements
+    
+    def match_with_threshold(self, true_pos: np.ndarray, est_pos: np.ndarray) -> List[Tuple[int, int, float]]:
+        """
+        閾値ベースのマッチングを行う
+        
+        Args:
+            true_pos: 真値の位置 (N, 2)
+            est_pos: 推定値の位置 (M, 2)
+        
+        Returns:
+            マッチングされたペアのリスト [(true_idx, est_idx, distance), ...]
+            閾値以内のマッチがない真値は含まれない（検出漏れとして扱う）
+        """
+        if len(true_pos) == 0 or len(est_pos) == 0:
+            return []
+        
+        matches = []
+        used_est_indices = set()
+        
+        # 各真値に対して最も近い推定値を探す
+        for i, tp in enumerate(true_pos):
+            min_dist = float('inf')
+            best_j = -1
+            
+            for j, ep in enumerate(est_pos):
+                if j in used_est_indices:
+                    continue  # 既にマッチング済み
+                
+                dist = np.linalg.norm(tp - ep)
+                if dist < min_dist:
+                    min_dist = dist
+                    best_j = j
+            
+            # 閾値以内であればマッチング
+            if best_j >= 0 and min_dist <= self.distance_threshold:
+                matches.append((i, best_j, min_dist))
+                used_est_indices.add(best_j)
+        
+        return matches
+    
+    def calculate_rmse_for_dataset(self, true_traj: pd.DataFrame, 
+                                   compare_traj: pd.DataFrame,
+                                   dataset_name: str) -> Dict:
+        """
+        データセット全体のRMSEを計算
+        
+        Args:
+            true_traj: 真値の軌道
+            compare_traj: 比較対象の軌道（推定値または測定値）
+            dataset_name: データセット名
+        
+        Returns:
+            RMSE結果の辞書
+        """
+        position_errors = []
+        velocity_errors = []
+        matched_counts = []
+        missed_detections = []
+        false_alarms = []
+        
+        # 全タイムステップを取得
+        true_times = set(true_traj['time'].unique())
+        comp_times = set(compare_traj['time'].unique())
+        all_times = sorted(true_times | comp_times)
+        
+        for t in all_times:
+            # 各タイムステップのデータを取得
+            true_t = true_traj[true_traj['time'] == t]
+            comp_t = compare_traj[compare_traj['time'] == t]
+            
+            n_true = len(true_t)
+            n_comp = len(comp_t)
+            
+            if n_true == 0:
+                # 真値がない場合（通常は発生しない）
+                false_alarms.append(n_comp)
+                continue
+            
+            if n_comp == 0:
+                # 推定値/測定値がない場合は全て検出漏れ
+                missed_detections.append(n_true)
+                continue
+            
+            # 位置データを取得
+            true_pos = true_t[['x', 'y']].values
+            comp_pos = comp_t[['x', 'y']].values
+            
+            # 閾値ベースのマッチング
+            matches = self.match_with_threshold(true_pos, comp_pos)
+            
+            n_matches = len(matches)
+            matched_counts.append(n_matches)
+            
+            # 検出漏れ数（マッチしなかった真値の数）
+            n_missed = n_true - n_matches
+            if n_missed > 0:
+                missed_detections.append(n_missed)
+            
+            # 誤警報数（マッチしなかった推定値/測定値の数）
+            n_false_alarm = n_comp - n_matches
+            if n_false_alarm > 0:
+                false_alarms.append(n_false_alarm)
+            
+            # マッチングしたペアの誤差を計算
+            for true_idx, comp_idx, dist in matches:
+                true_row = true_t.iloc[true_idx]
+                comp_row = comp_t.iloc[comp_idx]
+                
+                # 位置誤差
+                pos_error = np.sqrt((true_row['x'] - comp_row['x'])**2 + 
+                                  (true_row['y'] - comp_row['y'])**2)
+                position_errors.append(pos_error)
+                
+                # 速度誤差（両方にvx, vyがある場合のみ）
+                if 'vx' in comp_t.columns and 'vy' in comp_t.columns:
+                    # 真値の速度を計算（velocityとangleから）
+                    if 'velocity' in true_t.columns and 'angle' in true_t.columns:
+                        true_vx = true_row['velocity'] * np.cos(np.radians(true_row['angle']))
+                        true_vy = true_row['velocity'] * np.sin(np.radians(true_row['angle']))
+                    else:
+                        continue
+                    
+                    vel_error = np.sqrt((true_vx - comp_row['vx'])**2 + 
+                                      (true_vy - comp_row['vy'])**2)
+                    velocity_errors.append(vel_error)
+        
+        # RMSEを計算
+        results = {
+            'dataset': dataset_name,
+            'distance_threshold': self.distance_threshold,
+            'position_rmse': np.sqrt(np.mean(np.array(position_errors)**2)) if position_errors else None,
+            'velocity_rmse': np.sqrt(np.mean(np.array(velocity_errors)**2)) if velocity_errors else None,
+            'total_matches': sum(matched_counts),
+            'total_missed_detections': sum(missed_detections),
+            'total_false_alarms': sum(false_alarms),
+            'timesteps_with_matches': len(matched_counts),
+            'total_timesteps': len(all_times)
+        }
+        
+        return results
+    
+    def compare_all(self) -> pd.DataFrame:
+        """全データセットのRMSEを比較"""
+        true_traj, est_traj, measurements = self.load_data()
+        
+        results = []
+        
+        # 推定値のRMSE
+        print(f"Calculating RMSE for estimated trajectory (threshold: {self.distance_threshold}m)...")
+        est_results = self.calculate_rmse_for_dataset(true_traj, est_traj, "Estimated")
+        results.append(est_results)
+        
+        # 測定値のRMSE
+        print(f"Calculating RMSE for measurements (threshold: {self.distance_threshold}m)...")
+        meas_results = self.calculate_rmse_for_dataset(true_traj, measurements, "Measurements")
+        results.append(meas_results)
+        
+        # 結果をDataFrameに変換
+        results_df = pd.DataFrame(results)
+        
+        return results_df
+    
+    def print_results(self, results_df: pd.DataFrame):
+        """結果を見やすく表示"""
+        print("\n" + "="*70)
+        print("RMSE Comparison Results")
+        print("="*70)
+        
+        for _, row in results_df.iterrows():
+            print(f"\n{row['dataset']}:")
+            print(f"  Distance threshold: {row['distance_threshold']:.2f} m")
+            print(f"  Position RMSE: {row['position_rmse']:.4f} m" if row['position_rmse'] is not None else "  Position RMSE: N/A")
+            print(f"  Velocity RMSE: {row['velocity_rmse']:.4f} m/s" if row['velocity_rmse'] is not None else "  Velocity RMSE: N/A")
+            print(f"  Matched pairs: {row['total_matches']}")
+            print(f"  Missed detections: {row['total_missed_detections']}")
+            print(f"  False alarms: {row['total_false_alarms']}")
+            print(f"  Timesteps with matches: {row['timesteps_with_matches']}/{row['total_timesteps']}")
+        
+        print("\n" + "="*70)
 
-def load_csv(path):
-    return pd.read_csv(path)
-
-def compute_metrics(diffs, threshold):
-    """
-    RMSE, Median, Accuracy(閾値以内の割合)を計算
-    """
-    diffs = np.array(diffs)
-    if diffs.size == 0:
-        return float('nan'), float('nan'), 0.0
-    
-    sq_errors = np.sum(diffs ** 2, axis=1)
-    distances = np.sqrt(sq_errors)
-    
-    rmse = math.sqrt(np.mean(sq_errors))
-    median = np.median(distances)
-    
-    # Accuracy: 検出できたものの中で、誤差が閾値以内の割合
-    accuracy_count = np.sum(distances < threshold)
-    accuracy_rate = (accuracy_count / len(distances)) * 100.0
-    
-    return rmse, median, accuracy_rate
 
 def main():
-    base = Path(__file__).resolve().parent.parent
+    """メイン関数"""
+    # 閾値を設定（デフォルト: 5.0メートル）
+    # 必要に応じて変更してください
+    DISTANCE_THRESHOLD = 3.0
     
-    # ファイル読み込み
-    try:
-        true_df = load_csv(base / "true_data.csv")
-        meas_df = load_csv(base / "measurements.csv")
-        est_df  = load_csv(base / "csv_result" / "estimated_trajectory.csv")
-    except FileNotFoundError as e:
-        print(f"Error: ファイルが見つかりません。\n{e}")
-        return
-
-    # カラム特定
-    t_time = find_col(true_df, ["time"])
-    t_id   = find_col(true_df, ["target_id", "targetid", "id"])
-    t_x    = find_col(true_df, ["x"])
-    t_y    = find_col(true_df, ["y"])
-
-    m_time = find_col(meas_df, ["time"])
-    m_x    = find_col(meas_df, ["x"])
-    m_y    = find_col(meas_df, ["y"])
-
-    e_time = find_col(est_df, ["time"])
-    e_id   = find_col(est_df, ["target_id", "targetid", "id"])
-    e_x    = find_col(est_df, ["x"])
-    e_y    = find_col(est_df, ["y"])
-
-    true_df = true_df.dropna(subset=[t_time])
-    meas_df = meas_df.dropna(subset=[m_time])
-    est_df  = est_df.dropna(subset=[e_time])
-
-    targets = sorted(pd.unique(true_df[t_id])) if t_id else sorted(pd.unique(est_df[e_id]))
-    results = []
-
-    # 全体集計用
-    all_diffs_meas = []
-    all_diffs_est = []
-    total_samples = 0
-    total_detected_meas = 0
-    total_detected_est = 0
-
-    print(f"Processing {len(targets)} targets...")
-
-    for tid in targets:
-        true_sub = true_df[true_df[t_id] == tid]
-        times = sorted(pd.unique(true_sub[t_time]))
-        n_samples = len(times)
-        total_samples += n_samples
-
-        diffs_meas = []
-        diffs_est = []
-
-        for t in times:
-            trow = true_sub[true_sub[t_time] == t]
-            if trow.empty: continue
-            tx = float(trow.iloc[0][t_x])
-            ty = float(trow.iloc[0][t_y])
-
-            # --- Estimated ---
-            est_row = est_df[(est_df[e_id] == tid) & (est_df[e_time] == t)]
-            if not est_row.empty:
-                ex = float(est_row.iloc[0][e_x])
-                ey = float(est_row.iloc[0][e_y])
-                diffs_est.append([ex - tx, ey - ty])
-                all_diffs_est.append([ex - tx, ey - ty])
-
-            # --- Measurements ---
-            meas_rows = meas_df[meas_df[m_time] == t]
-            meas_rows = meas_rows.dropna(subset=[m_x, m_y])
-            if not meas_rows.empty:
-                mx = meas_rows[m_x].astype(float).values
-                my = meas_rows[m_y].astype(float).values
-                d2 = (mx - tx) ** 2 + (my - ty) ** 2
-                idx = int(np.argmin(d2))
-                mx_sel = float(mx[idx])
-                my_sel = float(my[idx])
-                diffs_meas.append([mx_sel - tx, my_sel - ty])
-                all_diffs_meas.append([mx_sel - tx, my_sel - ty])
-
-        # 指標計算
-        # 1. 検出率 (Detection Rate) = (検出できた数 / 全サンプル数)
-        det_rate_m = (len(diffs_meas) / n_samples) * 100.0
-        det_rate_e = (len(diffs_est) / n_samples) * 100.0
-        total_detected_meas += len(diffs_meas)
-        total_detected_est += len(diffs_est)
-
-        # 2. 精度 (RMSE, Median, Accuracy)
-        rmse_m, med_m, acc_m = compute_metrics(diffs_meas, SUCCESS_THRESHOLD)
-        rmse_e, med_e, acc_e = compute_metrics(diffs_est, SUCCESS_THRESHOLD)
-        
-        results.append({
-            'id': tid, 'n': n_samples,
-            'm': {'det': det_rate_m, 'rmse': rmse_m, 'med': med_m, 'acc': acc_m},
-            'e': {'det': det_rate_e, 'rmse': rmse_e, 'med': med_e, 'acc': acc_e}
-        })
-
-    # 全体評価
-    ov_rmse_m, ov_med_m, ov_acc_m = compute_metrics(all_diffs_meas, SUCCESS_THRESHOLD)
-    ov_rmse_e, ov_med_e, ov_acc_e = compute_metrics(all_diffs_est, SUCCESS_THRESHOLD)
-    ov_det_m = (total_detected_meas / total_samples * 100.0) if total_samples > 0 else 0
-    ov_det_e = (total_detected_est / total_samples * 100.0) if total_samples > 0 else 0
-
-    # ==========================
-    # 結果表示
-    # ==========================
-    print("\n" + "=" * 95)
-    print(f"EVALUATION REPORT (Threshold < {SUCCESS_THRESHOLD}m)")
-    print("  * Det%: Detection Rate (Availability)")
-    print("  * Acc%: Position Accuracy within threshold (Precision)")
-    print("=" * 95)
+    comparator = RMSEComparator(csv_dir="csv_result", distance_threshold=DISTANCE_THRESHOLD)
     
-    # Header
-    print(f"{'Target':<6} | {'N':<3} || {'MEASUREMENTS (Sensing)':^38} || {'ESTIMATED (Tracking)':^38}")
-    print(f"{'ID':<6} | {'':<3} || {'Det%':<6} {'RMSE':<6} {'Median':<6} {'Acc%':<6} || {'Det%':<6} {'RMSE':<6} {'Median':<6} {'Acc%':<6}")
-    print("-" * 95)
+    # RMSE比較を実行
+    results_df = comparator.compare_all()
     
-    def fmt(val, is_pct=False):
-        if math.isnan(val): return "-"
-        return f"{val:5.1f}%" if is_pct else f"{val:.3f}"
+    # 結果を表示
+    comparator.print_results(results_df)
+    
+    # 結果をCSVに保存
+    output_path = Path("csv_result") / "rmse_comparison_results.csv"
+    results_df.to_csv(output_path, index=False)
+    print(f"\nResults saved to {output_path}")
 
-    for r in results:
-        print(f"{r['id']:<6} | {r['n']:<3} || "
-              f"{fmt(r['m']['det'], True):<6} {fmt(r['m']['rmse']):<6} {fmt(r['m']['med']):<6} {fmt(r['m']['acc'], True):<6} || "
-              f"{fmt(r['e']['det'], True):<6} {fmt(r['e']['rmse']):<6} {fmt(r['e']['med']):<6} {fmt(r['e']['acc'], True):<6}")
 
-    print("-" * 95)
-    print("OVERALL SUMMARY:")
-    print(f"Measurements: Detection={ov_det_m:.1f}%, RMSE={ov_rmse_m:.3f}, Acc(within {SUCCESS_THRESHOLD}m)={ov_acc_m:.1f}%")
-    print(f"Estimated:    Detection={ov_det_e:.1f}%, RMSE={ov_rmse_e:.3f}, Acc(within {SUCCESS_THRESHOLD}m)={ov_acc_e:.1f}%")
-    print("=" * 95)
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
