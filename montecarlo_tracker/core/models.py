@@ -64,6 +64,7 @@ def get_measurement_model(cfg: Config) -> Tuple[np.ndarray, np.ndarray]:
         [0, 1, 0, 0]
     ])
     
+    
     R = np.eye(2) * (r_std ** 2)
     
     return H, R

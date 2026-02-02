@@ -90,6 +90,9 @@ class MOTACalculator:
         # 前回のマッチング結果を保存（IDスイッチ検出用）
         prev_matches = {}
         
+        # 全履歴を保持する辞書
+        track_history = {}  # {true_id: set of est_ids that matched}
+        
         for t in all_times:
             true_at_t = true_traj[true_traj['time'] == t]
             est_at_t = est_traj[est_traj['time'] == t]
@@ -108,12 +111,15 @@ class MOTACalculator:
             # FP: マッチしなかった推定トラック
             total_fp += n_est - len(matches)
             
-            # ID Switch検出
+            # ID Switch検出（改良版）
             for true_id, est_id in matches.items():
-                if true_id in prev_matches:
-                    # 同じ真のターゲットが前回と異なる推定IDにマッチした
-                    if prev_matches[true_id] != est_id:
+                if true_id in track_history:
+                    # 過去に異なるIDでマッチしていた場合
+                    if est_id not in track_history[true_id]:
                         total_idsw += 1
+                        track_history[true_id].add(est_id)
+                else:
+                    track_history[true_id] = {est_id}
             
             prev_matches = matches.copy()
         
