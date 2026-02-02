@@ -149,7 +149,7 @@ class TrackingSimulator:
             
             print(f"  Target {i}:")
             print(f"    RMSE: {rmse_target:.3f}")
-
+            
         mse_total = total_squared_error / (num_targets * num_steps)
         rmse_total = np.sqrt(mse_total)
         

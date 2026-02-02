@@ -54,7 +54,8 @@ def get_measurement_model(cfg: Config) -> Tuple[np.ndarray, np.ndarray]:
     """
     設定に基づいて H (観測行列) と R (観測ノイズ) を生成する
     """
-    r_std = cfg.measurement_noise_std
+    r_std = cfg.measurement_position_noise_std
+    v_std = cfg.measurement_velocity_noise_std
     
     # 現状は位置観測 (x, y) のみと仮定
     # 将来的に "Polar" (距離・角度) などを追加する場合もここで分岐
@@ -65,6 +66,8 @@ def get_measurement_model(cfg: Config) -> Tuple[np.ndarray, np.ndarray]:
     ])
     
     
-    R = np.eye(2) * (r_std ** 2)
-    
+    R = np.array([
+        [r_std**2, 0],      
+        [0, v_std**2]
+    ])
     return H, R
