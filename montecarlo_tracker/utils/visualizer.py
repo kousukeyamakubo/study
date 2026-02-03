@@ -119,7 +119,7 @@ class ResultVisualizer:
             # 各測定点の近くにタイムステップを数字で表示
             for _, row in measurements.iterrows():
                 # x座標を少し左に、y座標を少し上にオフセット
-                plt.text(row['x'] - 0.1, row['y'] + 0.1, f"{int(row['time'])}", 
+                plt.text(row['x'] - 0.05, row['y'] + 0.05, f"{int(row['time'])}", 
                     fontsize=10, ha='right', va='bottom', 
                     color='darkgreen', fontweight='bold')
     

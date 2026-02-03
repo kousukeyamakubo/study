@@ -17,10 +17,10 @@ class Config:
     gating_type: str = "Ellipsoidal"  # "Ellipsoidal", "Rectangular" ...
     filter_type: str = "KF"           # "KF" (Linear), "EKF" (Extended)
 
-    max_miss_count: int = 3           # トラック削除までの未検出許容回数
+    max_miss_count: int = 5           # トラック削除までの未検出許容回数
     
     # --- JPDAF / Gating 設定 ---
-    gate_threshold: float = 9.0  # カイ二乗分布の閾値
+    gate_threshold: float = 9.49  # カイ二乗分布の閾値
     clutter_density: float = 0.01 # 空間密度
     detection_prob: float = 0.9   # 検出確率 P_D
     
@@ -50,7 +50,11 @@ class Config:
     # SeMIのとき
     #process_noise_std: float = 0.3      # 0.05 -> 0.1 (動きの変化を許容し、遅れを減らす)
     #measurement_noise_std: float = 0.18 # 0.25 -> 0.23 (実測データ標準偏差に合わせる)
-
+    """
     process_noise_std: float = 0.8
     measurement_position_noise_std: float = 0.8
     measurement_velocity_noise_std: float = 1.6
+    """
+    process_noise_std: float = 1.0
+    measurement_position_noise_std: float = 0.2
+    measurement_velocity_noise_std: float = 0.8

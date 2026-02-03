@@ -252,6 +252,7 @@ class MOTACalculator:
             'Total Matches': total_matches,
             'Position RMSE': position_rmse,
             'Velocity RMSE': velocity_rmse,
+            'RMSE Pairs': len(all_position_errors),  # ← 追加
             'Times without FN': len(times_without_fn),
             'Total Times': len(all_times)
         }
@@ -326,6 +327,7 @@ class MOTACalculator:
             'Total Matches': total_matches,
             'Position RMSE': position_rmse,
             'Velocity RMSE': velocity_rmse,
+            'RMSE Pairs': len(all_position_errors),  # ← 追加
             'Times without FN': len(times_without_fn),
             'Total Times': len(all_times)
         }
@@ -396,6 +398,7 @@ class MOTACalculator:
                 print(f"Velocity RMSE:         {results['Velocity RMSE']:.4f} m/s")
             else:
                 print(f"Velocity RMSE:         N/A (no velocity data)")
+            print(f"RMSE Pairs (matched):  {results['RMSE Pairs']:6d}")  # ← 追加
             print(f"RMSE calculated from:  {results['Times without FN']} / {results['Total Times']} time steps (FN=0 only)")
         
         print("\n" + "="*70 + "\n")
