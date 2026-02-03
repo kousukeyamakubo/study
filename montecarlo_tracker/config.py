@@ -20,7 +20,7 @@ class Config:
     max_miss_count: int = 3           # トラック削除までの未検出許容回数
     
     # --- JPDAF / Gating 設定 ---
-    gate_threshold: float = 5.0  # カイ二乗分布の閾値
+    gate_threshold: float = 9.0  # カイ二乗分布の閾値
     clutter_density: float = 0.01 # 空間密度
     detection_prob: float = 0.9   # 検出確率 P_D
     

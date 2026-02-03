@@ -81,37 +81,33 @@ class TrackingSimulator:
                 print(f"Step {i + 1}/{num_steps}")
         
         # --- 結果の整形 ---
-        # [Time, Target] の形式を [Target, Time] に変換
-        #final_estimated_trajectories = [[] for _ in range(len(initial_states))]
-        
-        # 修正ポイント(12/22)
+        # 初期状態（t=0）を除いたステップリストを作成
         step_states_list = all_estimated_states[1:]
+
+        # track_id をキーとして軌跡を保存
+        track_trajectories = {}  # {track_id: [(time_step, state), ...]}
+
+        for time_step, states_at_t in enumerate(step_states_list):
+            for state in states_at_t:
+                track_id = state.track_id
+                if track_id not in track_trajectories:
+                    track_trajectories[track_id] = []
+                track_trajectories[track_id].append((time_step, state))
+
+        # 各トラックの軌跡を時系列順に並べる
+        final_estimated_trajectories = []
+        for track_id in sorted(track_trajectories.keys()):
+            trajectory = []
+            last_time = -1
+            for time_step, state in track_trajectories[track_id]:
+                # 欠損時間にNoneを埋める
+                while last_time + 1 < time_step:
+                    trajectory.append(None)
+                    last_time += 1
+                trajectory.append(state)
+                last_time = time_step
+            final_estimated_trajectories.append(trajectory)
         
-        
-        # 修正後
-        max_targets =0
-        # 修正ポイント(12/22)
-        #for states_at_t in all_estimated_states:
-        for states_at_t in step_states_list:
-            max_targets = max(max_targets, len(states_at_t))
-            
-        final_estimated_trajectories = [[] for _ in range(max_targets)]
-        # 修正ポイント(12/22)
-        """for states_at_t in all_estimated_states:
-            for target_idx, state in enumerate(states_at_t):
-                # 念のため、インデックスが範囲外なら拡張する処理を入れておく（安全策）
-                while len(final_estimated_trajectories) <= target_idx:
-                    final_estimated_trajectories.append([])
-                final_estimated_trajectories[target_idx].append(state)
-        """
-        for states_at_t in step_states_list:
-            for target_idx in range(max_targets):
-                # ターゲットが存在する場合はその状態を、存在しない場合は None を追加
-                if target_idx < len(states_at_t):
-                    final_estimated_trajectories[target_idx].append(states_at_t[target_idx])
-                else:
-                    final_estimated_trajectories[target_idx].append(None)
-                    
         #　オクルージョンが発生するとRMSE計算ができないのでいったんコメントアウト
         #if verbose and true_trajectories is not None:
             #self._print_results(true_trajectories, final_estimated_trajectories)

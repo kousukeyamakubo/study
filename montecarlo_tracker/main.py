@@ -60,7 +60,13 @@ def main():
 
     # get_dataメソッドで真値と観測値を取得
     true_trajs, measurements_list = scenario.get_data()
-    
+
+    # デバッグ: 時刻17-21の観測数を確認
+    print("\n=== Debug: Measurements count ===")
+    for t in range(17, min(22, len(measurements_list))):
+        print(f"Time {t}: {len(measurements_list[t])} measurements")
+    print("===================================\n")
+
     # 初期状態 (真値の初項)
     #initial_states = [traj[0] for traj in true_trajs]
     initial_states = []

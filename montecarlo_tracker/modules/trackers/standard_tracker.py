@@ -43,7 +43,7 @@ class StandardTracker(ITracker):
         return predicted_states
 
     def update(self, predicted_states: List[GaussianState], 
-                 measurements: List[np.ndarray]) -> Tuple[List[GaussianState], Any]:
+             measurements: List[np.ndarray]) -> Tuple[List[GaussianState], Any]:
         """
         Standard Trackerの更新ステップ
         Return:
@@ -69,7 +69,7 @@ class StandardTracker(ITracker):
                 new_miss_count = state.miss_count + 1
                 # miss_countが閾値未満なら保持
                 if new_miss_count < self.max_miss_count:
-                    updated_states.append(GaussianState(state.mean, state.covariance, new_miss_count))
+                    updated_states.append(GaussianState(state.mean, state.covariance, new_miss_count, track_id=state.track_id))
             return updated_states, []
             
         # --- ステップ1: ゲーティング (部品に委譲) ---
@@ -141,7 +141,7 @@ class StandardTracker(ITracker):
                 new_miss_count = state.miss_count + 1
             
             updated_states.append(GaussianState(updated_mean, updated_cov, new_miss_count, track_id=state.track_id))
-        
+
         # --- (B) 新規トラック生成 (追加) ---
         # どのトラックのゲートにも入らなかった観測 (validation_matrixの列の和が0) を探す
         # validation_matrix: [Target x Measurement]
@@ -154,9 +154,6 @@ class StandardTracker(ITracker):
                 z = measurements[j]
                 new_track = self._init_new_track(z)
                 updated_states.append(new_track)
-                print(f"[NEW TRACK CREATED] measurement index {j} -> new track at ({z[2]:.2f}, {z[3]:.2f})")
-            else:
-                print(f"[SKIPPED] measurement {j} is in gate of existing track(s)")
 
         # --- (C) トラック削除処理 ---
         # miss_countが閾値以上のトラックを削除
@@ -204,6 +201,4 @@ class StandardTracker(ITracker):
             # 新しいトラックIDを割り当て
             new_track_id = self.next_track_id
             self.next_track_id += 1  # インクリメント
-            
-            print(f"[NEW TRACK] Assigned track_id={new_track_id}")
             return GaussianState(init_mean, init_cov, miss_count=0, track_id=new_track_id)
