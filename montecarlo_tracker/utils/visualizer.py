@@ -71,9 +71,34 @@ class ResultVisualizer:
         
         plt.figure(figsize=(12, 10))
         
-        # 真値用：青系、推定値用：赤系の色パレット
-        true_colors = sns.color_palette("Blues_d", 10)   # 真値：青系（濃淡あり）
-        est_colors = sns.color_palette("Reds_d", 10)     # 推定値：赤系（濃淡あり）
+        # IDごとに使用するカラーリストを定義（真値と推定値で色被りなし、違いがはっきり）
+        # 真値用：明るく鮮やかな色
+        true_colors = [
+            '#1f77b4',  # 青
+            '#2ca02c',  # 緑
+            '#ff7f0e',  # オレンジ
+            '#9467bd',  # 紫
+            '#17becf',  # シアン
+            '#bcbd22',  # 黄緑
+            '#e377c2',  # ピンク
+            '#7f7f7f',  # グレー
+            '#8c564b',  # 茶色
+            '#00bfff',  # ディープスカイブルー
+        ]
+        
+        # 推定値用：暗めまたは異なる系統の色（真値と被らない）
+        est_colors = [
+            '#d62728',  # 赤
+            '#8b0000',  # ダークレッド
+            '#ff1493',  # ディープピンク
+            '#4b0082',  # インディゴ
+            '#8b4513',  # サドルブラウン
+            '#006400',  # ダークグリーン
+            '#00008b',  # ダークブルー
+            '#ff4500',  # オレンジレッド
+            '#800080',  # パープル
+            '#2f4f4f',  # ダークスレートグレー
+        ]
         
         # 真値と推定値の両方のトラックIDを取得
         true_target_ids = set(true_traj['target_id'].unique())
@@ -84,7 +109,7 @@ class ResultVisualizer:
         true_color_map = {tid: true_colors[i % len(true_colors)] for i, tid in enumerate(all_target_ids)}
         est_color_map = {tid: est_colors[i % len(est_colors)] for i, tid in enumerate(all_target_ids)}
         
-        # 真の軌道をプロット（青系）
+        # 真の軌道をプロット
         for target_id in true_target_ids:
             color = true_color_map[target_id]
             true_t = true_traj[true_traj['target_id'] == target_id]
@@ -101,16 +126,16 @@ class ResultVisualizer:
             plt.plot(true_t['x'].iloc[-1], true_t['y'].iloc[-1], marker='X', color=color,
                     markersize=15, alpha=0.7, linestyle='None')
         
-        # 推定軌道をプロット（赤系）
+        # 推定軌道をプロット
         for target_id in est_target_ids:
             color = est_color_map[target_id]
             est_t = est_traj[est_traj['target_id'] == target_id]
             
             if not est_t.empty:
-                # 破線で、赤系の色を使用
+                # 破線で表示
                 plt.plot(est_t['x'], est_t['y'], '--', linewidth=3, color=color,
                         label=f'Estimated Track {target_id}', marker='s', markersize=8)
-    
+
         # measurements は一度だけプロット
         if show_measurements and measurements is not None and not measurements.empty:
             plt.scatter(measurements['x'], measurements['y'], s=140, c='green', marker='x',
@@ -122,7 +147,7 @@ class ResultVisualizer:
                 plt.text(row['x'] - 0.05, row['y'] + 0.05, f"{int(row['time'])}", 
                     fontsize=10, ha='right', va='bottom', 
                     color='darkgreen', fontweight='bold')
-    
+
         plt.tick_params(labelsize=22)
         plt.xlabel('X[m]', fontsize=40)
         plt.ylabel('Y[m]', fontsize=40)
