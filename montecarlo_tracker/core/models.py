@@ -65,9 +65,11 @@ def get_measurement_model(cfg: Config) -> Tuple[np.ndarray, np.ndarray]:
         [0, 1, 0, 0]
     ])
     
-    
+    delta_x = 0.374
+    #delta_x = 0.076
+
     R = np.array([
-        [r_std**2, 0],      
-        [0, v_std**2]
+        [r_std**2 + delta_x**2/12, 0],      
+        [0, v_std**2 + delta_x**2/12]
     ])
     return H, R

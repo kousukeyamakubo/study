@@ -69,16 +69,17 @@ class ResultVisualizer:
         """2次元軌道をプロット (複数ターゲット対応)"""
         true_traj, est_traj, measurements, _ = self.load_data()
         
-        plt.figure(figsize=(12, 10))
+        plt.figure(figsize=(10, 8))
         
         # IDごとに使用するカラーリストを定義（真値と推定値で色被りなし、違いがはっきり）
         # 真値用：明るく鮮やかな色
         true_colors = [
             '#1f77b4',  # 青
+            '#1f77b4',  # 青
+            '#17becf',  # シアン
             '#2ca02c',  # 緑
             '#ff7f0e',  # オレンジ
             '#9467bd',  # 紫
-            '#17becf',  # シアン
             '#bcbd22',  # 黄緑
             '#e377c2',  # ピンク
             '#7f7f7f',  # グレー
@@ -88,6 +89,7 @@ class ResultVisualizer:
         
         # 推定値用：暗めまたは異なる系統の色（真値と被らない）
         est_colors = [
+            '#d62728',  # 赤
             '#d62728',  # 赤
             '#8b0000',  # ダークレッド
             '#ff1493',  # ディープピンク
@@ -142,11 +144,11 @@ class ResultVisualizer:
                 edgecolors='k', linewidths=3.0, alpha=0.95, label='Measurements', zorder=10)
             
             # 各測定点の近くにタイムステップを数字で表示
-            for _, row in measurements.iterrows():
-                # x座標を少し左に、y座標を少し上にオフセット
-                plt.text(row['x'] - 0.05, row['y'] + 0.05, f"{int(row['time'])}", 
-                    fontsize=10, ha='right', va='bottom', 
-                    color='darkgreen', fontweight='bold')
+            #for _, row in measurements.iterrows():
+            #    # x座標を少し左に、y座標を少し上にオフセット
+            #    plt.text(row['x'] - 0.05, row['y'] + 0.05, f"{int(row['time'])}", 
+            #        fontsize=10, ha='right', va='bottom', 
+            #        color='darkgreen', fontweight='bold')
 
         plt.tick_params(labelsize=22)
         plt.xlabel('X[m]', fontsize=40)
@@ -275,7 +277,7 @@ class ResultVisualizer:
         ax1.grid(True, alpha=0.3)
         ax1.tick_params(axis='both', labelsize=28, pad=10)
         ax1.set_title('Velocity Comparison (ID=0)', fontsize=38, fontweight='bold')
-        
+        """
         # 下のグラフ（ID≠0）の設定
         ax2.set_xlabel('Time [s]', fontsize=35)
         ax2.set_ylabel('Velocity [m/s]', fontsize=35)
@@ -283,7 +285,7 @@ class ResultVisualizer:
         ax2.grid(True, alpha=0.3)
         ax2.tick_params(axis='both', labelsize=28, pad=10)
         ax2.set_title('Velocity Comparison (ID≠0)', fontsize=38, fontweight='bold')
-        
+        """
         if save_path:
             plt.savefig(save_path, dpi=300, bbox_inches='tight')
             print(f"vx comparison plot saved to {save_path}")

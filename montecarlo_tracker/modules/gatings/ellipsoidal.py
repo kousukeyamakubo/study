@@ -31,8 +31,11 @@ class EllipsoidalGating(IGating):
         Returns:
             有効な観測のインデックスリスト
         """
-        # S = H * P * H^T + R
-        S = self.H @ predicted_state.covariance @ self.H.T + self.R
+        # S_pred = H * P * H^T
+        S_pred = self.H @ predicted_state.covariance @ self.H.T
+        
+        # S = S_pred + R
+        S = S_pred + self.R
         
         # 数値安定性のための微小項（オプション）
         # S += np.eye(S.shape[0]) * 1e-9

@@ -20,7 +20,9 @@ class Config:
     max_miss_count: int = 5           # トラック削除までの未検出許容回数
     
     # --- JPDAF / Gating 設定 ---
-    gate_threshold: float = 9.49  # カイ二乗分布の閾値
+    #gate_threshold: float = 13.28  # カイ二乗分布の閾値
+    gate_threshold: float = 9.21  # 2次元観測の場合の推奨値(95%信頼度)
+    #gate_threshold: float = 16.81
     clutter_density: float = 0.01 # 空間密度
     detection_prob: float = 0.9   # 検出確率 P_D
     
@@ -55,6 +57,48 @@ class Config:
     measurement_position_noise_std: float = 0.8
     measurement_velocity_noise_std: float = 1.6
     """
-    process_noise_std: float = 1.0
-    measurement_position_noise_std: float = 0.2
-    measurement_velocity_noise_std: float = 0.8
+    # 2GHz用
+    process_noise_std: float = 0.5
+    measurement_position_noise_std: float = 0.1
+    measurement_velocity_noise_std: float = 1.0
+
+    # 400MHz用(現実的？) Case 1
+    process_noise_std: float = 0.5
+    measurement_position_noise_std: float = 0.107 + 0
+    measurement_velocity_noise_std: float = 0.107 + 0
+    # 400MHz用(現実的？) Case 2
+    process_noise_std: float = 0.5
+    measurement_position_noise_std: float = 0.107 + 0.1
+    measurement_velocity_noise_std: float = 0.107 + 0.1
+    # 400MHz用 Case 3
+    process_noise_std: float = 0.5
+    measurement_position_noise_std: float = 0.107 + 1.0
+    measurement_velocity_noise_std: float = 0.107 + 1.0
+    # 2GHz用(現実的？) Case 1
+    process_noise_std: float = 0.5
+    measurement_position_noise_std: float = 0.022 + 0
+    measurement_velocity_noise_std: float = 0.022 + 0
+    
+    # 2GHz用(現実的？) Case 2
+    process_noise_std: float = 0.5
+    measurement_position_noise_std: float = 0.022 + 0.1
+    measurement_velocity_noise_std: float = 0.022 + 0.1
+    
+    
+    # 2GHz用 Case 3
+    process_noise_std: float = 0.5
+    measurement_position_noise_std: float = 0.22 + 1.0
+    measurement_velocity_noise_std: float = 0.22 + 1.0
+    # Case.1
+    process_noise_std: float = 0.5
+    measurement_position_noise_std: float = 0
+    measurement_velocity_noise_std: float = 0
+    # Case.2
+    process_noise_std: float = 0.5
+    measurement_position_noise_std: float = 0.1
+    measurement_velocity_noise_std: float = 0.1
+    # Case.3
+    process_noise_std: float = 0.5
+    measurement_position_noise_std: float = 1.0
+    measurement_velocity_noise_std: float = 1.0
+    

@@ -56,10 +56,8 @@ class StandardTracker(ITracker):
         
         # --- (A) トラックがまだ無い場合の処理 (追加) ---
         if num_targets == 0:
-            # 全ての観測を新規トラックとして登録して返す
-            new_tracks = []
-            for z in measurements:
-                new_tracks.append(self._init_new_track(z))
+            # 近接する観測をクラスタリングしてトラックを生成
+            new_tracks = self._cluster_and_init_tracks(measurements)
             return new_tracks, [] # infoは空で返す
         
         # 観測がない場合は miss_count をインクリメントして閾値チェック
@@ -76,10 +74,15 @@ class StandardTracker(ITracker):
         validation_matrix = np.zeros((num_targets, num_measurements), dtype=int)
         validated_measurements_per_target = []
         
+        print("\n=== ゲーティング結果 ===")
         for i, state in enumerate(predicted_states):
             # 注入された GatingModule を使用
             indices = self.gating_module.validate_measurements(state, measurements_xy)
             validated_measurements_per_target.append(indices)
+            
+            # 各トラックのゲート内観測数を表示
+            track_id = state.track_id if hasattr(state, 'track_id') else i
+            print(f"Track ID {track_id}: ゲート内観測数 = {len(indices)} (観測インデックス: {indices})")
             
             for j in indices:
                 validation_matrix[i, j] = 1
@@ -194,7 +197,7 @@ class StandardTracker(ITracker):
             # R = [[r, 0], [0, r]] と仮定して対角成分を取り出す
             r_var_x = self.R[0, 0]
             r_var_y = self.R[1, 1]
-            v_var = 100.0 # 速度の初期不確かさ（大きめに設定）
+            v_var = 10.0 # 速度の初期不確かさ（大きめに設定）
             
             init_cov = np.diag([r_var_x, r_var_y, v_var, v_var])
             # 修正
@@ -202,3 +205,54 @@ class StandardTracker(ITracker):
             new_track_id = self.next_track_id
             self.next_track_id += 1  # インクリメント
             return GaussianState(init_mean, init_cov, miss_count=0, track_id=new_track_id)
+
+    def _cluster_and_init_tracks(self, measurements: List[np.ndarray]) -> List[GaussianState]:
+        """
+        近接する観測をクラスタリングしてトラックを生成
+        距離が近い観測を1つのクラスターにまとめ、その平均位置でトラックを初期化する
+        """
+        if not measurements:
+            return []
+    
+        # クラスターのリスト（各クラスターは観測のリスト）
+        clusters = []
+        cluster_threshold = 7.0  # クラスタリングの距離閾値
+        
+        for z in measurements:
+            # 位置成分を抽出（z[2:4]がx,y）
+            z_pos = z[2:4]
+            
+            # 既存のクラスターとの距離を計算
+            min_dist = float('inf')
+            min_idx = -1
+            
+            for i, cluster in enumerate(clusters):
+                # クラスター内の観測の平均位置を計算
+                cluster_positions = [obs[2:4] for obs in cluster]
+                cluster_center = np.mean(cluster_positions, axis=0)
+                
+                # 観測とクラスター中心との距離
+                dist = np.linalg.norm(z_pos - cluster_center)
+                
+                if dist < min_dist:
+                    min_dist = dist
+                    min_idx = i
+            
+            # 閾値以内のクラスターがあれば追加、なければ新規クラスター作成
+            if min_dist < cluster_threshold and min_idx >= 0:
+                clusters[min_idx].append(z)
+            else:
+                clusters.append([z])
+        
+        # 各クラスターから1つのトラックを生成
+        new_tracks = []
+        for cluster in clusters:
+            # クラスター内の観測の平均を計算
+            cluster_array = np.array(cluster)
+            avg_measurement = np.mean(cluster_array, axis=0)
+            
+            # 平均観測値から新規トラックを初期化
+            new_track = self._init_new_track(avg_measurement)
+            new_tracks.append(new_track)
+        
+        return new_tracks
