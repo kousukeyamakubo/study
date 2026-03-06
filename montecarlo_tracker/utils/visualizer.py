@@ -168,9 +168,7 @@ class ResultVisualizer:
     def plot_position_error(self, save_path: str = None):
         """位置誤差の時間変化をプロット (複数ターゲット対応)"""
         true_traj, est_traj, _, _ = self.load_data()
-        
-        num_targets = true_traj['target_id'].nunique()
-        
+        """
         fig, axes = plt.subplots(num_targets, 1, figsize=(12, 4 * num_targets), squeeze=False)
         
         for i in range(num_targets):
@@ -191,17 +189,43 @@ class ResultVisualizer:
                 ax.set_title('Position Estimation Error', fontsize=40, fontweight='bold')
             if i == num_targets - 1:
                 ax.set_xlabel('Time Step', fontsize=40)
-        
-        # --- ★追加: 目盛りの文字サイズ変更 ---
-        # labelsize=30 で数値を大きくします
-        # pad=10 で軸と数値の間に少し隙間を空けて見やすくします
+
         plt.tick_params(axis='both', labelsize=30, pad=10) 
-        # -------------------------------------
+        """
+        fig, ax = plt.subplots(1,1,figsize=(14, 12))
+        # 真値と推定値の両方のトラックIDを取得
+        true_target_ids = sorted(true_traj['target_id'].unique())
+        est_target_ids = sorted(est_traj['target_id'].unique())
+        all_target_ids = sorted(set(true_target_ids) | set(est_target_ids))
+        # データのフィルタリング
+        car_target_id = 0
+        true_t = true_traj[true_traj['target_id'] == car_target_id]
+        est_t = est_traj[est_traj['target_id'] == car_target_id]
+        # 位置誤差を計算
+        error_x = est_t['x'] - true_t['x']
+        error_y = est_t['y'] - true_t['y']
+        error_norm = np.sqrt(error_x**2 + error_y**2)
+        ax.plot(true_t['time'], error_norm, '-', linewidth=3, 
+                    label=f'True ID={car_target_id}', color='blue')
         
+        # データのフィルタリング
+        cy_target_id = 1
+        true_t = true_traj[true_traj['target_id'] == cy_target_id]
+        est_t = est_traj[est_traj['target_id'] == cy_target_id]
+        # 位置誤差を計算
+        error_x = est_t['x'] - true_t['x']
+        error_y = est_t['y'] - true_t['y']
+        error_norm = np.sqrt(error_x**2 + error_y**2)
+        ax.plot(true_t['time'], error_norm, '-', linewidth=3, 
+                    label=f'True ID={cy_target_id}', color='red')
         if save_path:
             plt.savefig(save_path, dpi=300, bbox_inches='tight')
             print(f"Error plot saved to {save_path}")
-        
+        ax.set_ylabel('RMSE[m]', fontsize=35)
+        #ax.legend(loc='best', fontsize=20, ncol=2)
+        ax.grid(True, alpha=0.3)
+        ax.tick_params(axis='both', labelsize=28, pad=10)
+        ax.set_title('Range Comparison', fontsize=38, fontweight='bold')
         plt.tight_layout()
         plt.show()
 
@@ -213,12 +237,12 @@ class ResultVisualizer:
         true_target_ids = sorted(true_traj['target_id'].unique())
         est_target_ids = sorted(est_traj['target_id'].unique())
         all_target_ids = sorted(set(true_target_ids) | set(est_target_ids))
-        
-        # 2つのサブプロットを作成（上: ID=0, 下: ID≠0）
-        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 12))
-        
         # レーダー座標
         radar_pos = np.array([250, -18, 50])
+        
+        """
+        # 2つのサブプロットを作成（上: ID=0, 下: ID≠0）
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 12))
         
         # トラックIDごとに異なる色を割り当て（測定値用）
         colors = sns.color_palette("husl", len(all_target_ids))
@@ -277,7 +301,7 @@ class ResultVisualizer:
         ax1.grid(True, alpha=0.3)
         ax1.tick_params(axis='both', labelsize=28, pad=10)
         ax1.set_title('Velocity Comparison (ID=0)', fontsize=38, fontweight='bold')
-        """
+        
         # 下のグラフ（ID≠0）の設定
         ax2.set_xlabel('Time [s]', fontsize=35)
         ax2.set_ylabel('Velocity [m/s]', fontsize=35)
@@ -286,12 +310,143 @@ class ResultVisualizer:
         ax2.tick_params(axis='both', labelsize=28, pad=10)
         ax2.set_title('Velocity Comparison (ID≠0)', fontsize=38, fontweight='bold')
         """
+        fig, ax = plt.subplots(1,1,figsize=(14, 12))
+        # データのフィルタリング
+        car_target_id = 0
+        true_t = true_traj[true_traj['target_id'] == car_target_id]
+        est_t = est_traj[est_traj['target_id'] == car_target_id]
+        
+        if 'target_id' in measurements.columns:
+            meas_t = measurements[measurements['target_id'] == car_target_id]
+        else:
+            meas_t = measurements.copy()
+        # 推定値の視線速度を計算
+        est_radial_vel = []
+        for _, row in est_t.iterrows():
+            tx, ty = row['x'], row['y']
+            dx = radar_pos[0] - tx
+            dy = radar_pos[1] - ty
+            dz = radar_pos[2] - 0 
+            dist = np.sqrt(dx**2 + dy**2 + dz**2)
+            vx = row['vx']
+            vy = row['vy']
+            """
+            if dist > 1e-6:
+                v_r = (vx * dx + vy * dy) / dist
+            else:
+                v_r = 0.0
+            """
+            v_r = np.sqrt(vx**2+vy**2)
+            est_radial_vel.append(v_r)
+        est_t = est_t.copy()
+        est_t['radial_velocity'] = est_radial_vel
+        print(est_t['radial_velocity'][0])
+        print(meas_t['velocity'][0])
+
+        if not true_t.empty:
+            ax.plot(true_t['time'], true_t['velocity'], '-', linewidth=3, 
+                    label=f'True ID={car_target_id}', color='blue')
+        
+        if not est_t.empty:
+            ax.plot(est_t['time'], est_t['radial_velocity'], '--', linewidth=3, 
+                    label=f'Est. ID={car_target_id}', color='red', alpha=0.8)
+        
+        if not meas_t.empty and 'vx' in meas_t.columns:
+            ax.plot(meas_t['time'], meas_t['velocity'], 'o', linewidth=2.5, 
+                    label=f'Meas. ID={car_target_id}', color='green', alpha=0.6)
+        
+        cy_target_id = 1
+        true_t = true_traj[true_traj['target_id'] == cy_target_id]
+        est_t = est_traj[est_traj['target_id'] == cy_target_id]
+        
+        if 'target_id' in measurements.columns:
+            meas_t = measurements[measurements['target_id'] == cy_target_id]
+        else:
+            meas_t = measurements.copy()
+        # 推定値の視線速度を計算
+        est_radial_vel = []
+        for _, row in est_t.iterrows():
+            tx, ty = row['x'], row['y']
+            dx = radar_pos[0] - tx
+            dy = radar_pos[1] - ty
+            dz = radar_pos[2] - 0 
+            dist = np.sqrt(dx**2 + dy**2 + dz**2)
+            vx = row['vx']
+            vy = row['vy']
+            
+            """
+            if dist > 1e-6:
+                v_r = (vx * dx + vy * dy) / dist
+            else:
+                v_r = 0.0
+            """
+            v_r = np.sqrt(vx**2+vy**2)
+            est_radial_vel.append(v_r)
+        est_t = est_t.copy()
+        est_t['radial_velocity'] = est_radial_vel
+
+        if not true_t.empty:
+            ax.plot(true_t['time'], true_t['velocity'], '-', linewidth=3, 
+                    label=f'True ID={cy_target_id}', color='blue')
+        
+        if not est_t.empty:
+            ax.plot(est_t['time'], est_t['radial_velocity'], '--', linewidth=3, 
+                    label=f'Est. ID={cy_target_id}', color='red', alpha=0.8)
+        
+        #if not meas_t.empty and 'vx' in meas_t.columns:
+        #    ax.plot(meas_t['time'], meas_t['vx'], 'o', linewidth=2.5, 
+        #            label=f'Meas. ID={cy_target_id}', color='green', alpha=0.6)
+        ax.set_ylabel('Velocity [m/s]', fontsize=35)
+        #ax.legend(loc='best', fontsize=20, ncol=2)
+        ax.grid(True, alpha=0.3)
+        ax.tick_params(axis='both', labelsize=28, pad=10)
+        ax.set_title('Velocity Comparison', fontsize=38, fontweight='bold')
+        
         if save_path:
             plt.savefig(save_path, dpi=300, bbox_inches='tight')
             print(f"vx comparison plot saved to {save_path}")
-        
+        plt.ylim(5,11)
         plt.tight_layout()
         plt.show()
+
+    def plot_vel_RMSE(self, save_path: str = None):
+        true_traj, est_traj, _, _ = self.load_data()
+        fig, ax = plt.subplots(1,1,figsize=(14, 12))
+        # 真値と推定値の両方のトラックIDを取得
+        true_target_ids = sorted(true_traj['target_id'].unique())
+        est_target_ids = sorted(est_traj['target_id'].unique())
+        all_target_ids = sorted(set(true_target_ids) | set(est_target_ids))
+        # データのフィルタリング
+        car_target_id = 0
+        true_t = true_traj[true_traj['target_id'] == car_target_id]
+        est_t = est_traj[est_traj['target_id'] == car_target_id]
+        # 推定結果から速度を作成
+        v = np.sqrt(est_t['vx']**2+est_t['vy']**2)
+        # 位置誤差を計算
+        error_v = np.sqrt((v-true_t['velocity'])**2)
+        ax.plot(true_t['time'], error_v, '-', linewidth=3, 
+                    label=f'True ID={car_target_id}', color='blue')
+        # データのフィルタリング
+        cy_target_id = 1
+        true_t = true_traj[true_traj['target_id'] == cy_target_id]
+        est_t = est_traj[est_traj['target_id'] == cy_target_id]
+        # 推定結果から速度を作成
+        v = np.sqrt(est_t['vx']**2+est_t['vy']**2)
+        # 位置誤差を計算
+        error_v = np.sqrt((v-true_t['velocity'])**2)
+        ax.plot(true_t['time'], error_v, '-', linewidth=3, 
+                    label=f'True ID={cy_target_id}', color='red')
+        if save_path:
+            plt.savefig(save_path, dpi=300, bbox_inches='tight')
+            print(f"Error plot saved to {save_path}")
+        ax.set_ylabel('RMSE[m/s]', fontsize=35)
+        #ax.legend(loc='best', fontsize=20, ncol=2)
+        ax.grid(True, alpha=0.3)
+        ax.tick_params(axis='both', labelsize=28, pad=10)
+        ax.set_title('Range Comparison', fontsize=38, fontweight='bold')
+        plt.tight_layout()
+        plt.show()
+        return
 
 def main_visualize():
     """可視化メイン関数"""
@@ -301,14 +456,16 @@ def main_visualize():
     # 変更後: 今回のシナリオ結果 (csv_result) を指定する
     visualizer = ResultVisualizer(csv_dir="csv_result")
     
-    print("Plotting 2D trajectory...")
-    visualizer.plot_trajectory_2d()
+    #print("Plotting 2D trajectory...")
+    #visualizer.plot_trajectory_2d()
     
-    #print("Plotting position error...")
+    print("Plotting position error...")
     #visualizer.plot_position_error()
     
-    print("Plotting vx comparison...")
-    visualizer.plot_vx_comparison()
+    #print("Plotting vx comparison...")
+    #visualizer.plot_vx_comparison()
+
+    visualizer.plot_vel_RMSE()
 
 if __name__ == "__main__":
     # 可視化を実行する場合は、main.py とは別に実行してください
