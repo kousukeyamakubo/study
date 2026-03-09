@@ -1,7 +1,6 @@
 import numpy as np
 
 def stevec(N_ant, angle):
-    def stevec(N_ant, angle):
     # 入力された角度に対するステアリングベクトルの計算
     resp = (np.arange(N_ant)-N_ant*0.5+0.5).reshape([-1,1])
     resp = np.exp(1j*resp*np.pi*np.sin(angle))
