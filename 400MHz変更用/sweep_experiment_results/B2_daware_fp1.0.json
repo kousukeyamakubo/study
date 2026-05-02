@@ -1,0 +1,370 @@
+{
+  "name": "B2_daware_fp1.0",
+  "config": {
+    "name": "B2_daware_fp1.0",
+    "type": "daware",
+    "cy_w": 500,
+    "ve_w": 500,
+    "fp_w": 1.0,
+    "dt": 0.5
+  },
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 49.557754853633895,
+      "train_cy": 0.0,
+      "train_ve": 0.0,
+      "val_loss": 0.01370976200948159,
+      "val_cy": 0.0,
+      "val_ve": 0.0
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.011150573366986855,
+      "train_cy": 0.00684931506849315,
+      "train_ve": 0.0,
+      "val_loss": 0.0052796189673244955,
+      "val_cy": 0.0,
+      "val_ve": 0.0
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.03559863596622433,
+      "train_cy": 0.00684931506849315,
+      "train_ve": 0.0,
+      "val_loss": 0.004759913155188163,
+      "val_cy": 0.0,
+      "val_ve": 0.0
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.007916161052084396,
+      "train_cy": 0.00684931506849315,
+      "train_ve": 0.0,
+      "val_loss": 0.0038372046469400327,
+      "val_cy": 0.0,
+      "val_ve": 0.0
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.011251666549859303,
+      "train_cy": 0.02054794520547945,
+      "train_ve": 0.0,
+      "val_loss": 0.004079020861536264,
+      "val_cy": 0.0,
+      "val_ve": 0.0
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.013375027597482715,
+      "train_cy": 0.0,
+      "train_ve": 0.0,
+      "val_loss": 0.003733085095882416,
+      "val_cy": 0.0,
+      "val_ve": 0.0
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.020395954512059687,
+      "train_cy": 0.0,
+      "train_ve": 0.007462686567164179,
+      "val_loss": 0.003801428945735097,
+      "val_cy": 0.0,
+      "val_ve": 0.0
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.0036391277797520162,
+      "train_cy": 0.0,
+      "train_ve": 0.0,
+      "val_loss": 0.0030684536322951317,
+      "val_cy": 0.0,
+      "val_ve": 0.0
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.05576010666388486,
+      "train_cy": 0.0,
+      "train_ve": 0.007462686567164179,
+      "val_loss": 0.0036750557521979016,
+      "val_cy": 0.0,
+      "val_ve": 0.0
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.016095719479822686,
+      "train_cy": 0.00684931506849315,
+      "train_ve": 0.0,
+      "val_loss": 0.0032324333675205707,
+      "val_cy": 0.0,
+      "val_ve": 0.0
+    },
+    {
+      "epoch": 11,
+      "train_loss": 0.0035559920061911856,
+      "train_cy": 0.0,
+      "train_ve": 0.0,
+      "val_loss": 0.003191483533009887,
+      "val_cy": 0.0,
+      "val_ve": 0.0
+    },
+    {
+      "epoch": 12,
+      "train_loss": 0.0035268095321953296,
+      "train_cy": 0.0,
+      "train_ve": 0.0,
+      "val_loss": 0.0031238039024174213,
+      "val_cy": 0.0,
+      "val_ve": 0.0
+    },
+    {
+      "epoch": 13,
+      "train_loss": 0.019542006815650634,
+      "train_cy": 0.0273972602739726,
+      "train_ve": 0.0,
+      "val_loss": 0.0035437409300357104,
+      "val_cy": 0.0,
+      "val_ve": 0.0
+    },
+    {
+      "epoch": 14,
+      "train_loss": 0.0033347733385328737,
+      "train_cy": 0.0,
+      "train_ve": 0.0,
+      "val_loss": 0.0029687592138846713,
+      "val_cy": 0.0,
+      "val_ve": 0.0
+    },
+    {
+      "epoch": 15,
+      "train_loss": 0.006882462391097631,
+      "train_cy": 0.0,
+      "train_ve": 0.0,
+      "val_loss": 0.0029143386986106635,
+      "val_cy": 0.0,
+      "val_ve": 0.0
+    },
+    {
+      "epoch": 16,
+      "train_loss": 0.01016484328678676,
+      "train_cy": 0.0273972602739726,
+      "train_ve": 0.007462686567164179,
+      "val_loss": 0.002951454930007458,
+      "val_cy": 0.0,
+      "val_ve": 0.0
+    },
+    {
+      "epoch": 17,
+      "train_loss": 0.0051877916524452825,
+      "train_cy": 0.00684931506849315,
+      "train_ve": 0.0,
+      "val_loss": 0.0030896305727461976,
+      "val_cy": 0.0,
+      "val_ve": 0.0
+    },
+    {
+      "epoch": 18,
+      "train_loss": 0.004806553485936352,
+      "train_cy": 0.0,
+      "train_ve": 0.0,
+      "val_loss": 0.0029456242608527344,
+      "val_cy": 0.0,
+      "val_ve": 0.0
+    },
+    {
+      "epoch": 19,
+      "train_loss": 0.0029720878694206474,
+      "train_cy": 0.0,
+      "train_ve": 0.0,
+      "val_loss": 0.002715729254608353,
+      "val_cy": 0.0,
+      "val_ve": 0.0
+    },
+    {
+      "epoch": 20,
+      "train_loss": 0.012215083704463073,
+      "train_cy": 0.0273972602739726,
+      "train_ve": 0.0,
+      "val_loss": 0.003323604539036751,
+      "val_cy": 0.0,
+      "val_ve": 0.0
+    },
+    {
+      "epoch": 21,
+      "train_loss": 0.0029964880352573737,
+      "train_cy": 0.0,
+      "train_ve": 0.0,
+      "val_loss": 0.002719430299475789,
+      "val_cy": 0.0,
+      "val_ve": 0.0
+    },
+    {
+      "epoch": 22,
+      "train_loss": 0.006702900312042662,
+      "train_cy": 0.0,
+      "train_ve": 0.007462686567164179,
+      "val_loss": 0.002883196591089169,
+      "val_cy": 0.0,
+      "val_ve": 0.0
+    },
+    {
+      "epoch": 23,
+      "train_loss": 0.004645040870777198,
+      "train_cy": 0.00684931506849315,
+      "train_ve": 0.0,
+      "val_loss": 0.010994439059868456,
+      "val_cy": 0.038461538461538464,
+      "val_ve": 0.0
+    },
+    {
+      "epoch": 24,
+      "train_loss": 0.00643683122470975,
+      "train_cy": 0.04794520547945205,
+      "train_ve": 0.0,
+      "val_loss": 0.002734790152559678,
+      "val_cy": 0.0,
+      "val_ve": 0.0
+    },
+    {
+      "epoch": 25,
+      "train_loss": 0.00807622130960226,
+      "train_cy": 0.00684931506849315,
+      "train_ve": 0.0,
+      "val_loss": 0.002608405007049441,
+      "val_cy": 0.0,
+      "val_ve": 0.0
+    },
+    {
+      "epoch": 26,
+      "train_loss": 0.0045231114075120005,
+      "train_cy": 0.0273972602739726,
+      "train_ve": 0.0,
+      "val_loss": 0.0026550439186394216,
+      "val_cy": 0.0,
+      "val_ve": 0.0
+    },
+    {
+      "epoch": 27,
+      "train_loss": 0.0026670695349041906,
+      "train_cy": 0.0,
+      "train_ve": 0.0,
+      "val_loss": 0.002535852075864871,
+      "val_cy": 0.0,
+      "val_ve": 0.0
+    },
+    {
+      "epoch": 28,
+      "train_loss": 0.007986416188733919,
+      "train_cy": 0.02054794520547945,
+      "train_ve": 0.007462686567164179,
+      "val_loss": 0.0025521065574139355,
+      "val_cy": 0.0,
+      "val_ve": 0.0
+    },
+    {
+      "epoch": 29,
+      "train_loss": 0.009986389681164708,
+      "train_cy": 0.00684931506849315,
+      "train_ve": 0.007462686567164179,
+      "val_loss": 0.003386904128516714,
+      "val_cy": 0.0,
+      "val_ve": 0.0
+    },
+    {
+      "epoch": 30,
+      "train_loss": 0.006701293654207672,
+      "train_cy": 0.0136986301369863,
+      "train_ve": 0.0,
+      "val_loss": 0.0026444001278529564,
+      "val_cy": 0.0,
+      "val_ve": 0.0
+    }
+  ],
+  "elapsed_min": 6.321309892336528,
+  "eval": {
+    "0.3": {
+      "scenario": {
+        "cy_hit": 31,
+        "ve_hit": 31,
+        "both": 31,
+        "total": 31,
+        "n_cy_mean": 6.483870967741935,
+        "n_ve_mean": 23.483870967741936
+      },
+      "holdout2obj": {
+        "cy_hit": 100,
+        "ve_hit": 100,
+        "both": 100,
+        "total": 100,
+        "n_cy_mean": 6.71,
+        "n_ve_mean": 21.52
+      },
+      "single_cy": {
+        "hit": 128,
+        "fp": 121,
+        "total": 128
+      },
+      "single_ve": {
+        "hit": 132,
+        "fp": 132,
+        "total": 132
+      }
+    },
+    "0.5": {
+      "scenario": {
+        "cy_hit": 0,
+        "ve_hit": 0,
+        "both": 0,
+        "total": 31,
+        "n_cy_mean": 0.0,
+        "n_ve_mean": 0.0
+      },
+      "holdout2obj": {
+        "cy_hit": 0,
+        "ve_hit": 0,
+        "both": 0,
+        "total": 100,
+        "n_cy_mean": 0.0,
+        "n_ve_mean": 0.0
+      },
+      "single_cy": {
+        "hit": 3,
+        "fp": 0,
+        "total": 128
+      },
+      "single_ve": {
+        "hit": 0,
+        "fp": 0,
+        "total": 132
+      }
+    },
+    "0.7": {
+      "scenario": {
+        "cy_hit": 0,
+        "ve_hit": 0,
+        "both": 0,
+        "total": 31,
+        "n_cy_mean": 0.0,
+        "n_ve_mean": 0.0
+      },
+      "holdout2obj": {
+        "cy_hit": 0,
+        "ve_hit": 0,
+        "both": 0,
+        "total": 100,
+        "n_cy_mean": 0.0,
+        "n_ve_mean": 0.0
+      },
+      "single_cy": {
+        "hit": 0,
+        "fp": 0,
+        "total": 128
+      },
+      "single_ve": {
+        "hit": 0,
+        "fp": 0,
+        "total": 132
+      }
+    }
+  }
+}
