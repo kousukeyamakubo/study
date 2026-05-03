@@ -3,3 +3,6 @@ __pycache__/
 *.pyc
 .ipynb_checkpoints/
 meeting/
+sweep_models/
+sweep_experiment_results_v2/*.pt
+sweep_experiment_results_v3/*.pt
