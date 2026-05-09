@@ -44,6 +44,43 @@ r_diff（サイクリスト・車両のレンジビン差）を段階的に変�
 | σ_r=1.0 + NMS 縮小 | ラベル設計実験 | — |
 | 角度軸追加 (10ch出力・3D NMS) | 現在の主軸 | hit rate 向上 |
 
+## 実験フォルダ運用ルール
+
+新しい実験（スクリプト + 結果）は必ず `experiments/` 以下に専用フォルダを作成して格納する。
+
+### ディレクトリ構造
+
+```
+experiments/
+└── <実験名>/
+    ├── <実験スクリプト>.py   ← 実行・評価スクリプト
+    └── <実験名>_results/     ← 出力ファイル（画像・CSV・JSON など）
+```
+
+### 命名規則
+
+| 対象 | 規則 | 例 |
+|---|---|---|
+| 実験フォルダ | snake_case | `cfar_param_sweep/` |
+| 結果サブフォルダ | `<実験フォルダ名>_results/` | `cfar_param_sweep_results/` |
+| スクリプト | snake_case、フォルダ名と揃える | `cfar_param_sweep.py` |
+
+### パス記述
+
+スクリプト内のパスはスクリプト自身の位置を基準にした相対パスで記述する。
+
+```python
+# experiments/cfar_param_sweep/cfar_param_sweep.py の場合
+MIXED_META_CSV = "../../learn_dataset_fixed_angle/metadata.csv"
+OUTPUT_DIR     = "./cfar_param_sweep_results"
+```
+
+### 注意事項
+
+- ルートや他の実験フォルダに直接スクリプト・結果を置かない
+- 複数の実験で共有するデータセット（`learn_dataset_*/`）はルートに残す
+- モデル重み（`best_detector_*.pt`）もルートに残す
+
 ## 今後の検討事項
 
 - r_diff が小さい場合の分離精度向上（データ拡張？ラベル設計？）

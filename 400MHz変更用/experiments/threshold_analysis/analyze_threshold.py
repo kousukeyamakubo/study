@@ -18,11 +18,11 @@ D_TOL        = 2
 R_TOL        = 3
 DEVICE       = "cuda" if torch.cuda.is_available() else "cpu"
 
-TRAIN_META_CSV = "./learn_dataset_single_object/metadata.csv"
-FIXED_META_CSV = "./learn_dataset_fixed_angle/metadata.csv"
-MODEL_PATH_SEG = "./best_detector_softmax_heatmap.pt"
+TRAIN_META_CSV = "../../learn_dataset_single_object/metadata.csv"
+FIXED_META_CSV = "../../learn_dataset_fixed_angle/metadata.csv"
+MODEL_PATH_SEG = "../../best_detector_softmax_heatmap.pt"
 
-RESULT_FILE    = "./threshold_analysis_result.txt"
+RESULT_FILE    = "./threshold_analysis_result/threshold_analysis_result.txt"
 
 THRESHOLDS = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 

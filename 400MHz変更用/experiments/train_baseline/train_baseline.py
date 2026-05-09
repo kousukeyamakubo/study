@@ -11,13 +11,13 @@ import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 
 # ===== 定数 =====
-TRAIN_DATASET_DIR  = "./learn_dataset_single_object"
-TEST_DATASET_DIR   = "./learn_dataset_fixed_angle"
-SCENARIO_META_CSV  = "./learn_dataset_scenario_test/metadata.csv"
+TRAIN_DATASET_DIR  = "../../learn_dataset_single_object"
+TEST_DATASET_DIR   = "../../learn_dataset_fixed_angle"
+SCENARIO_META_CSV  = "../../learn_dataset_scenario_test/metadata.csv"
 TRAIN_META_CSV     = os.path.join(TRAIN_DATASET_DIR, "metadata.csv")
 TEST_META_CSV      = os.path.join(TEST_DATASET_DIR,  "metadata.csv")
-MODEL_PATH_OUT     = "./best_detector_baseline.pt"
-RESULT_PATH        = "./experiment_results_baseline.txt"
+MODEL_PATH_OUT     = "../../best_detector_baseline.pt"
+RESULT_PATH        = "./train_baseline_results/experiment_results_baseline.txt"
 
 N_FIXED      = 10
 FIXED_ANGLES = np.linspace(-5, 5, N_FIXED)

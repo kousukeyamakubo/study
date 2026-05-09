@@ -9,8 +9,8 @@ import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 
 # ===== 定数 =====
-TRAIN_DATASET_DIR = "./learn_dataset_single_object"
-TEST_DATASET_DIR  = "./learn_dataset_fixed_angle"
+TRAIN_DATASET_DIR = "../../learn_dataset_single_object"
+TEST_DATASET_DIR  = "../../learn_dataset_fixed_angle"
 TRAIN_META_CSV = os.path.join(TRAIN_DATASET_DIR, "metadata.csv")
 TEST_META_CSV  = os.path.join(TEST_DATASET_DIR,  "metadata.csv")
 

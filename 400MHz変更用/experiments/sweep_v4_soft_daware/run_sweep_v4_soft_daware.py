@@ -1,17 +1,19 @@
 """
-実験スイープ v3: top-K soft selection の網羅的探索
-- K (top-K数): 1, 3, 5
-- fp_w: 0.001, 0.01, 0.1
+実験スイープ v4: soft daware（閾値なしFPペナルティ）の探索
+- GTが背景(0)のセルに非BG確率が乗っている量の平均をペナルティ化
+- ハード閾値を使わないため「閾値以下に隠れる崩壊」が構造的に不可能
+- fp_w: 0.001, 0.005, 0.01
 - 学習データ: 単一物体(single) / 混合2物体(mixed)
-  -> 3 x 3 x 2 = 18 run + 混合baseline 1 run = 計19 run
-4時間以内完了を目標（各run ~7分 x 19 = 約2.2時間 + 評価）
+  -> 3 x 2 = 6 run + 混合baseline 1 run = 計7 run
+各run約5-10分 x 7 = 35-70分を想定
 
 前回実験との対応:
   v1: A1 baseline(best), B1-B4 detection-aware(全崩壊)
   v2: C1-C3 small FP_penalty(thr=0.5で崩壊), C4 warmup(実質CE-only), C5 top-K K=3 fp_w=1.0(崩壊)
-  v3: top-K の K と fp_w を網羅的に探索 + 混合学習の効果を検証
+  v3: top-K/daware 網羅探索。daware mixed fp_w=0.001がシナリオ74.2%。top-K mixed K=3 fp_w=0.001が90.3%。
+  v4: soft daware（閾値撤廃）を導入。GTが背景のセルの非BG確率平均でペナルティ化。崩壊不可能。
 
-結果は sweep_experiment_results_v3/ に保存（既存結果は変更しない）
+結果は sweep_experiment_results_v4_soft_daware/ に保存（既存結果は変更しない）
 """
 import os, sys, json, time
 sys.stdout.reconfigure(encoding='utf-8')
@@ -25,11 +27,11 @@ import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 
 # ===== 定数 =====
-SINGLE_META_CSV   = "./learn_dataset_single_object/metadata.csv"
-MIXED_META_CSV    = "./learn_dataset_fixed_angle/metadata.csv"
-SCENARIO_CSV      = "./learn_dataset_scenario_test/metadata.csv"
-PREV_RESULTS_DIR  = "./sweep_experiment_results"
-RESULTS_DIR       = "./sweep_experiment_results_v3"
+SINGLE_META_CSV   = "../../learn_dataset_single_object/metadata.csv"
+MIXED_META_CSV    = "../../learn_dataset_fixed_angle/metadata.csv"
+SCENARIO_CSV      = "../../learn_dataset_scenario_test/metadata.csv"
+PREV_RESULTS_DIR  = "../sweep_v1/sweep_experiment_results"
+RESULTS_DIR       = "./sweep_experiment_results_v4_soft_daware"
 
 N_FIXED      = 10
 FIXED_ANGLES = np.linspace(-5, 5, N_FIXED)
@@ -45,42 +47,23 @@ os.makedirs(RESULTS_DIR, exist_ok=True)
 print(f"DEVICE: {DEVICE}", flush=True)
 
 # ===== 実験設定 =====
-# type: "baseline" / "topk" / "daware"
+# type: "baseline" / "soft_daware"
 # data: "single" / "mixed"
-# k: top-K数 (topkのみ使用)
-# dt: NMS閾値 (dawareのみ使用)
+# fp_w: soft dawareのペナルティ係数
 CONFIGS = []
 
-# top-K: K x fp_w x data を網羅
-for k in [1, 3, 5]:
-    for fp_w in [0.001, 0.01, 0.1]:
-        CONFIGS.append({
-            "name": f"D_tk{k}_fp{fp_w}_single",
-            "type": "topk", "k": k, "fp_w": fp_w, "dt": None,
-            "data": "single", "cy_w": 500, "ve_w": 500,
-        })
-        CONFIGS.append({
-            "name": f"D_tk{k}_fp{fp_w}_mixed",
-            "type": "topk", "k": k, "fp_w": fp_w, "dt": None,
-            "data": "mixed", "cy_w": 500, "ve_w": 500,
-        })
-
-# daware: 小さいfp_w で単一/混合（B1-B4 0.5-2.0は全崩壊、C1 0.01も崩壊 -> さらに小さく試す）
+# ソフトdaware: fp_w x data を網羅
 for fp_w in [0.001, 0.005, 0.01]:
-    CONFIGS.append({
-        "name": f"D_dw_fp{fp_w}_single",
-        "type": "daware", "k": None, "fp_w": fp_w, "dt": 0.5,
-        "data": "single", "cy_w": 500, "ve_w": 500,
-    })
-    CONFIGS.append({
-        "name": f"D_dw_fp{fp_w}_mixed",
-        "type": "daware", "k": None, "fp_w": fp_w, "dt": 0.5,
-        "data": "mixed", "cy_w": 500, "ve_w": 500,
-    })
+    for data in ["single", "mixed"]:
+        CONFIGS.append({
+            "name": f"E_sdw_fp{fp_w}_{data}",
+            "type": "soft_daware", "k": None, "fp_w": fp_w, "dt": None,
+            "data": data, "cy_w": 500, "ve_w": 500,
+        })
 
-# 混合学習の baseline（比較基準）
+# 混合baseline（比較基準）
 CONFIGS.append({
-    "name": "D_baseline_mixed",
+    "name": "E_baseline_mixed",
     "type": "baseline", "k": None, "fp_w": None, "dt": None,
     "data": "mixed", "cy_w": 500, "ve_w": 500,
 })
@@ -176,20 +159,6 @@ def seg_loss_base(logits, y_seg, cy_w, ve_w):
     w = torch.tensor([1.0, cy_w, ve_w], dtype=torch.float32, device=logits.device)
     return F.cross_entropy(logits, y_seg, weight=w)
 
-def seg_loss_daware(logits, y_seg, cy_w, ve_w, fp_w, dt):
-    """NMSで検出されたFPピクセルの確率をペナルティとして加算。ハード閾値dt未満では逃げられる問題あり。"""
-    base  = seg_loss_base(logits, y_seg, cy_w, ve_w)
-    probs = F.softmax(logits, dim=1)
-    fp_loss = torch.tensor(0., device=logits.device)
-    for i in range(logits.shape[0]):
-        cy_dets, ve_dets = decode_detections(logits[i:i+1].detach().cpu(), threshold=dt)
-        cy_true = (y_seg[i] == 1); ve_true = (y_seg[i] == 2)
-        for ch, d, r in cy_dets:
-            if not cy_true[ch, d, r].item(): fp_loss = fp_loss + probs[i, 1, ch, d, r]
-        for ch, d, r in ve_dets:
-            if not ve_true[ch, d, r].item(): fp_loss = fp_loss + probs[i, 2, ch, d, r]
-    return base + fp_w * fp_loss / logits.shape[0]
-
 def seg_loss_topk(logits, y_seg, cy_w, ve_w, fp_w, k):
     """
     top-K soft selection:
@@ -212,6 +181,21 @@ def seg_loss_topk(logits, y_seg, cy_w, ve_w, fp_w, k):
                     fp_loss = fp_loss + prob_val
     return base + fp_w * fp_loss / B
 
+def seg_loss_soft_daware(logits, y_seg, cy_w, ve_w, fp_w):
+    """
+    閾値なしソフトFPペナルティ。
+    GTが背景(0)のセルにcy/ve確率が乗っている量を平均でペナルティ化。
+    ハード閾値を使わないため閾値崩壊が構造的に不可能。
+    """
+    base  = seg_loss_base(logits, y_seg, cy_w, ve_w)
+    probs = F.softmax(logits, dim=1)  # (B, 3, N, H, W)
+    # GTが背景(0)のセルにcy+ve確率が乗っている量を平均化
+    bg_mask = (y_seg == 0).float()   # (B, N, H, W)
+    n_bg    = bg_mask.sum().clamp(min=1)
+    fp_prob = (probs[:, 1] + probs[:, 2]) * bg_mask  # (B, N, H, W)
+    fp_loss = fp_prob.sum() / n_bg   # スカラー（平均化でスケール安定）
+    return base + fp_w * fp_loss
+
 # ===== 学習ループ =====
 def run_epoch(model, loader, cfg, optimizer=None, eval_thr=0.5):
     train_mode = optimizer is not None
@@ -227,10 +211,11 @@ def run_epoch(model, loader, cfg, optimizer=None, eval_thr=0.5):
         logits = model(x)
         if cfg["type"] == "baseline":
             loss = seg_loss_base(logits, y_seg, cfg["cy_w"], cfg["ve_w"])
-        elif cfg["type"] == "topk":
-            loss = seg_loss_topk(logits, y_seg, cfg["cy_w"], cfg["ve_w"], cfg["fp_w"], cfg["k"])
+        elif cfg["type"] == "soft_daware":
+            loss = seg_loss_soft_daware(logits, y_seg, cfg["cy_w"], cfg["ve_w"], cfg["fp_w"])
         else:
-            loss = seg_loss_daware(logits, y_seg, cfg["cy_w"], cfg["ve_w"], cfg["fp_w"], cfg["dt"])
+            # topkは比較用に残す（v4では主要実験ではない）
+            loss = seg_loss_topk(logits, y_seg, cfg["cy_w"], cfg["ve_w"], cfg["fp_w"], cfg["k"])
         if train_mode:
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
@@ -331,6 +316,20 @@ if os.path.exists(a1_json):
         all_results["A1_baseline_cy500"] = json.load(f)
     print("A1 baseline: 既存結果を読み込みました", flush=True)
 
+# v3 ベスト daware（比較用）
+v3_dw_json = "../sweep_v3/sweep_experiment_results_v3/D_dw_fp0.001_mixed.json"
+if os.path.exists(v3_dw_json):
+    with open(v3_dw_json, "r", encoding="utf-8") as f:
+        all_results["D_dw_fp0.001_mixed(v3)"] = json.load(f)
+    print("v3 daware mixed: 既存結果を読み込みました", flush=True)
+
+# v3 ベスト top-K（比較用）
+v3_tk_json = "../sweep_v3/sweep_experiment_results_v3/D_tk3_fp0.001_mixed.json"
+if os.path.exists(v3_tk_json):
+    with open(v3_tk_json, "r", encoding="utf-8") as f:
+        all_results["D_tk3_fp0.001_mixed(v3)"] = json.load(f)
+    print("v3 topk mixed: 既存結果を読み込みました", flush=True)
+
 # ===== 全run実行 =====
 for cfg in CONFIGS:
     name     = cfg["name"]
@@ -348,8 +347,8 @@ for cfg in CONFIGS:
     val_loader   = single_val_loader   if data_type == "single" else mixed_val_loader
 
     print(f"\n{'='*50}", flush=True)
-    if cfg["type"] == "topk":
-        print(f"[{name}] K={cfg['k']}, fp_w={cfg['fp_w']}, data={data_type}", flush=True)
+    if cfg["type"] == "soft_daware":
+        print(f"[{name}] soft_daware, fp_w={cfg['fp_w']}, data={data_type}", flush=True)
     else:
         print(f"[{name}] baseline CE, data={data_type}", flush=True)
     print(f"{'='*50}", flush=True)
@@ -407,11 +406,11 @@ for cfg in CONFIGS:
 print("\nレポートを生成中...", flush=True)
 now = datetime.now().strftime("%Y-%m-%d %H:%M")
 
-# A1をレポート先頭に配置
-report_order = ["A1_baseline_cy500"] + [c["name"] for c in CONFIGS]
+# A1・v3比較をレポート先頭に配置
+report_order = ["A1_baseline_cy500", "D_dw_fp0.001_mixed(v3)", "D_tk3_fp0.001_mixed(v3)"] + [c["name"] for c in CONFIGS]
 
 lines = [
-    "# 実験レポート v3: top-K soft selection 網羅的探索",
+    "# 実験レポート v4 soft-daware: 閾値なしFPペナルティ実験",
     "",
     f"生成日時: {now}",
     "",
@@ -423,37 +422,29 @@ lines = [
     "- 出力: `(B, 3, 10, H, W)` の3クラスlogit (0=背景 / 1=サイクリスト / 2=車両)",
     "- softmax + NMSで検出: 閾値を超えるピーク全てを検出候補とする（1枚に複数検出可）",
     "- GT: 各ボクセルに0/1/2の離散値（点ラベル）。cy/ve重複時はveが優先",
-    "- 損失: weighted cross-entropy (BG=1.0, cy=500, ve=500) + top-K FPペナルティ（本実験）",
+    "- 損失: weighted cross-entropy (BG=1.0, cy=500, ve=500) + soft daware FPペナルティ（本実験）",
     "",
     "## 実験の背景と経緯",
     "",
-    "**v1 (A/B series)**: sigmoid出力の崩壊問題を解消するためsoftmax3クラスに移行。",
-    "A1 baseline（CE損失のみ）がholdout 99%・scenario 97%と良好な検出性能を達成。",
-    "ただし単一物体学習のためcy-only画面でvehicle誤検出76%という問題が残った。",
-    "detection-aware loss（B1-B4）はFPペナルティが強すぎて全崩壊した。",
+    "**v1-v3の経緯**: sigmoid崩壊 → softmax3クラス移行 → detection-aware(daware)loss導入。",
+    "dawareはNMS後のFP確率をペナルティするが、確率を閾値0.5以下に押し込むことで回避できる（閾値崩壊）。",
+    "v3ではfp_w=0.001のみ機能し、daware mixed でシナリオ74.2%が上限だった。",
     "",
-    "**v2 (C series)**: FP_penaltyを0.01-0.1に小さくしても閾値崩壊（thr=0.5で0%）は解消されず。",
-    "C4（warmup=15エポック）はwarmup中のCE-onlyモデルがbest_valとして保存されたため",
-    "実質的にCE-onlyモデルと等価。cy FP=0%という副次的改善はあったが設計意図と異なる。",
-    "C5（top-K K=3, fp_w=1.0）はペナルティがCE損失を圧倒して完全崩壊（全ep cy=ve=0）。",
-    "",
-    "**v3（本実験）**: top-Kのfp_wをさらに小さく(0.001-0.1)、Kも1/3/5と変えて網羅探索。",
-    "dawareも同様にfp_w=0.001-0.01で再試行（C1=0.01は崩壊したため下限を探る）。",
-    "また混合学習（2物体データ）でve誤検出問題が改善するか同時に検証する。",
-    "top-Kのメリット: ハード閾値なしで常にtop-K個を評価するため「閾値以下に隠れる崩壊」が構造的に不可能。",
-    "dawareの問題: dt=0.5未満に確率を抑えることでFPペナルティを回避できる（閾値崩壊）。",
+    "**v4 soft-daware**: 閾値を撤廃し、GTが背景のセルの非BG確率の平均をペナルティとする。",
+    "モデルが確率を閾値以下に押し込んでもペナルティが減らないため、崩壊が構造的に不可能。",
+    "平均化によりスケールが[0,1]に収まり、fp_wのスケール調整がしやすい。",
     "",
     "## 実験設定",
     "",
-    "| run | type | K | fp_w | detect_thr | 学習データ |",
-    "|---|---|---|---|---|---|",
-    "| A1_baseline_cy500 | baseline | - | - | - | single |",
+    "| run | type | fp_w | 学習データ |",
+    "|---|---|---|---|",
+    "| A1_baseline_cy500 | baseline | - | single |",
+    "| D_dw_fp0.001_mixed(v3) | daware | 0.001 | mixed |",
+    "| D_tk3_fp0.001_mixed(v3) | topk(K=3) | 0.001 | mixed |",
 ]
 for cfg in CONFIGS:
-    k_str  = str(cfg["k"])   if cfg["k"]   else "-"
-    fp_str = str(cfg["fp_w"]) if cfg["fp_w"] else "-"
-    dt_str = str(cfg["dt"])  if cfg["dt"]  else "-"
-    lines.append(f"| {cfg['name']} | {cfg['type']} | {k_str} | {fp_str} | {dt_str} | {cfg['data']} |")
+    fp_str = str(cfg["fp_w"]) if cfg["fp_w"] is not None else "-"
+    lines.append(f"| {cfg['name']} | {cfg['type']} | {fp_str} | {cfg['data']} |")
 
 lines += [
     "",
@@ -478,7 +469,9 @@ for section, metric_key, total in [
     ]
     for name in report_order:
         if name not in all_results: continue
-        data_label = all_results[name]["config"].get("data", "single") if name != "A1_baseline_cy500" else "single"
+        data_label = all_results[name]["config"].get("data", "single") if name not in ("A1_baseline_cy500", "D_dw_fp0.001_mixed(v3)", "D_tk3_fp0.001_mixed(v3)") else (
+            "single" if name == "A1_baseline_cy500" else "mixed"
+        )
         e = all_results[name]["eval"].get(thr_key, {}).get(metric_key, {})
         n = e.get("total", total)
         lines.append(f"| {name} | {data_label}"
@@ -497,7 +490,9 @@ lines += [
 ]
 for name in report_order:
     if name not in all_results: continue
-    data_label = all_results[name]["config"].get("data", "single") if name != "A1_baseline_cy500" else "single"
+    data_label = all_results[name]["config"].get("data", "single") if name not in ("A1_baseline_cy500", "D_dw_fp0.001_mixed(v3)", "D_tk3_fp0.001_mixed(v3)") else (
+        "single" if name == "A1_baseline_cy500" else "mixed"
+    )
     sc  = all_results[name]["eval"].get(thr_key, {}).get("single_cy", {})
     sv  = all_results[name]["eval"].get(thr_key, {}).get("single_ve", {})
     cn, vn = sc.get("total", 1), sv.get("total", 1)
@@ -506,30 +501,6 @@ for name in report_order:
                  f" | {sc.get('fp',0)}/{cn} ({sc.get('fp',0)/cn*100:.1f}%)"
                  f" | {sv.get('hit',0)}/{vn} ({sv.get('hit',0)/vn*100:.1f}%)"
                  f" | {sv.get('fp',0)}/{vn} ({sv.get('fp',0)/vn*100:.1f}%) |")
-lines.append("")
-
-# K別・fp_w別比較（single/mixedを並べる）
-lines += [
-    "## K別・fp_w別比較（threshold=0.5, holdout both）",
-    "",
-    "| K | fp_w | single holdout | mixed holdout | single cy FP | mixed cy FP |",
-    "|---|---|---|---|---|---|",
-]
-for k in [1, 3, 5]:
-    for fp_w in [0.001, 0.01, 0.1]:
-        n_s = f"D_tk{k}_fp{fp_w}_single"
-        n_m = f"D_tk{k}_fp{fp_w}_mixed"
-        def _get(name, key1, key2, default=0):
-            return all_results.get(name, {}).get("eval", {}).get(thr_key, {}).get(key1, {}).get(key2, default)
-        sb = _get(n_s, "holdout2obj", "both"); sn = _get(n_s, "holdout2obj", "total") or 100
-        mb = _get(n_m, "holdout2obj", "both"); mn = _get(n_m, "holdout2obj", "total") or 100
-        sfp = _get(n_s, "single_cy", "fp"); sct = _get(n_s, "single_cy", "total") or 1
-        mfp = _get(n_m, "single_cy", "fp"); mct = _get(n_m, "single_cy", "total") or 1
-        lines.append(f"| {k} | {fp_w}"
-                     f" | {sb}/{sn} ({sb/sn*100:.1f}%)"
-                     f" | {mb}/{mn} ({mb/mn*100:.1f}%)"
-                     f" | {sfp}/{sct} ({sfp/sct*100:.1f}%)"
-                     f" | {mfp}/{mct} ({mfp/mct*100:.1f}%) |")
 lines.append("")
 
 # 閾値感度
@@ -556,11 +527,10 @@ lines += [
     "",
     "*(実験後に記入)*",
     "",
-    "- top-K: fp_wが小さすぎる場合（CE損失に埋もれる）と大きすぎる場合（崩壊）の境界:",
-    "- K=1 vs K=3 vs K=5 の違い:",
-    "- daware小fp_w（0.001-0.01）での閾値崩壊回避の可否:",
-    "- 混合学習のve FP改善効果:",
-    "- single+top-K vs mixed+baseline の比較:",
+    "- soft_daware の fp_w 有効範囲（CE と釣り合うスケール）:",
+    "- single vs mixed での FP 抑制効果の違い:",
+    "- v3 daware_mixed（74.2%）との比較:",
+    "- v3 topk_mixed（90.3%）との比較:",
     "",
 ]
 
@@ -569,4 +539,4 @@ with open(report_path, "w", encoding="utf-8") as f:
     f.write("\n".join(lines))
 
 print(f"レポートを保存しました: {report_path}")
-print("スイープv3完了")
+print("スイープv4完了")

@@ -1,0 +1,148 @@
+DEVICE: cuda
+NN thresholds (30): [0.05  0.1   0.15  0.2   0.2   0.225 0.25  0.275 0.3   0.325 0.35  0.375
+ 0.4   0.425 0.45  0.475 0.5   0.525 0.55  0.575 0.6   0.625 0.65  0.675
+ 0.7   0.75  0.8   0.85  0.9   0.95 ]
+holdout2obj=100, cy_only=128, ve_only=132
+
+[CFAR] CFARマスクのキャッシュ構築中...
+[CFAR] キャッシュ完了 (100 件)
+  CFAR tar_thresh= -10dB  cy=5/100  ve=0/100  dets=111  P=0.045  R=0.025  FP/sample=1.06
+  CFAR tar_thresh= -12dB  cy=10/100  ve=0/100  dets=289  P=0.035  R=0.050  FP/sample=2.79
+  CFAR tar_thresh= -14dB  cy=13/100  ve=0/100  dets=418  P=0.031  R=0.065  FP/sample=4.05
+  CFAR tar_thresh= -16dB  cy=23/100  ve=2/100  dets=571  P=0.044  R=0.125  FP/sample=5.46
+  CFAR tar_thresh= -18dB  cy=39/100  ve=4/100  dets=859  P=0.050  R=0.215  FP/sample=8.16
+  CFAR tar_thresh= -20dB  cy=58/100  ve=4/100  dets=1290  P=0.048  R=0.310  FP/sample=12.28
+  CFAR tar_thresh= -22dB  cy=70/100  ve=5/100  dets=1724  P=0.044  R=0.375  FP/sample=16.49
+  CFAR tar_thresh= -24dB  cy=86/100  ve=12/100  dets=2236  P=0.044  R=0.490  FP/sample=21.38
+  CFAR tar_thresh= -26dB  cy=91/100  ve=39/100  dets=3094  P=0.042  R=0.650  FP/sample=29.64
+  CFAR tar_thresh= -28dB  cy=97/100  ve=72/100  dets=4198  P=0.040  R=0.845  FP/sample=40.29
+  CFAR tar_thresh= -30dB  cy=99/100  ve=87/100  dets=5384  P=0.035  R=0.930  FP/sample=51.98
+  CFAR tar_thresh= -32dB  cy=99/100  ve=87/100  dets=6384  P=0.029  R=0.930  FP/sample=61.98
+  CFAR tar_thresh= -34dB  cy=99/100  ve=87/100  dets=7099  P=0.026  R=0.930  FP/sample=69.13
+  CFAR tar_thresh= -36dB  cy=99/100  ve=87/100  dets=7942  P=0.023  R=0.930  FP/sample=77.56
+
+==================================================
+[D_tk3_fp0.001_mixed] PR/ROC 評価開始
+C:\Users\kosuke\study\400MHz変更用\eval_pr_roc.py:135: ComplexWarning: Casting complex values to real discards the imaginary part
+  return np.stack([20.*np.log10(np.maximum(np.abs(d["rd_maps"][i].astype(np.float32)), 1e-12))
+  thr=0.050  P_cy=0.124 R_cy=1.000  P_ve=0.073 R_ve=1.000  TPR_cy=1.000 FPR_cy=0.727  TPR_ve=1.000 FPR_ve=1.000
+  thr=0.100  P_cy=0.196 R_cy=1.000  P_ve=0.097 R_ve=1.000  TPR_cy=1.000 FPR_cy=0.508  TPR_ve=1.000 FPR_ve=0.909
+  thr=0.150  P_cy=0.278 R_cy=1.000  P_ve=0.116 R_ve=1.000  TPR_cy=1.000 FPR_cy=0.328  TPR_ve=1.000 FPR_ve=0.674
+  thr=0.200  P_cy=0.346 R_cy=0.990  P_ve=0.136 R_ve=1.000  TPR_cy=1.000 FPR_cy=0.203  TPR_ve=1.000 FPR_ve=0.538
+  thr=0.200  P_cy=0.346 R_cy=0.990  P_ve=0.136 R_ve=1.000  TPR_cy=1.000 FPR_cy=0.203  TPR_ve=1.000 FPR_ve=0.538
+  thr=0.225  P_cy=0.384 R_cy=0.990  P_ve=0.147 R_ve=1.000  TPR_cy=1.000 FPR_cy=0.117  TPR_ve=1.000 FPR_ve=0.477
+  thr=0.250  P_cy=0.440 R_cy=0.990  P_ve=0.156 R_ve=1.000  TPR_cy=1.000 FPR_cy=0.047  TPR_ve=1.000 FPR_ve=0.402
+  thr=0.275  P_cy=0.485 R_cy=0.990  P_ve=0.163 R_ve=1.000  TPR_cy=1.000 FPR_cy=0.008  TPR_ve=1.000 FPR_ve=0.295
+  thr=0.300  P_cy=0.529 R_cy=0.990  P_ve=0.172 R_ve=1.000  TPR_cy=1.000 FPR_cy=0.000  TPR_ve=1.000 FPR_ve=0.242
+  thr=0.325  P_cy=0.576 R_cy=0.980  P_ve=0.178 R_ve=1.000  TPR_cy=1.000 FPR_cy=0.000  TPR_ve=0.992 FPR_ve=0.197
+  thr=0.350  P_cy=0.620 R_cy=0.980  P_ve=0.185 R_ve=1.000  TPR_cy=1.000 FPR_cy=0.000  TPR_ve=0.992 FPR_ve=0.167
+  thr=0.375  P_cy=0.630 R_cy=0.970  P_ve=0.193 R_ve=1.000  TPR_cy=1.000 FPR_cy=0.000  TPR_ve=0.992 FPR_ve=0.129
+  thr=0.400  P_cy=0.674 R_cy=0.970  P_ve=0.198 R_ve=1.000  TPR_cy=1.000 FPR_cy=0.000  TPR_ve=0.992 FPR_ve=0.114
+  thr=0.425  P_cy=0.708 R_cy=0.970  P_ve=0.206 R_ve=1.000  TPR_cy=1.000 FPR_cy=0.000  TPR_ve=0.992 FPR_ve=0.098
+  thr=0.450  P_cy=0.740 R_cy=0.970  P_ve=0.215 R_ve=1.000  TPR_cy=1.000 FPR_cy=0.000  TPR_ve=0.992 FPR_ve=0.053
+  thr=0.475  P_cy=0.808 R_cy=0.970  P_ve=0.223 R_ve=0.990  TPR_cy=1.000 FPR_cy=0.000  TPR_ve=0.992 FPR_ve=0.030
+  thr=0.500  P_cy=0.843 R_cy=0.970  P_ve=0.231 R_ve=0.990  TPR_cy=1.000 FPR_cy=0.000  TPR_ve=0.992 FPR_ve=0.023
+  thr=0.525  P_cy=0.850 R_cy=0.960  P_ve=0.239 R_ve=0.990  TPR_cy=0.992 FPR_cy=0.000  TPR_ve=0.992 FPR_ve=0.023
+  thr=0.550  P_cy=0.864 R_cy=0.950  P_ve=0.248 R_ve=0.980  TPR_cy=0.992 FPR_cy=0.000  TPR_ve=0.992 FPR_ve=0.023
+  thr=0.575  P_cy=0.870 R_cy=0.940  P_ve=0.258 R_ve=0.980  TPR_cy=0.992 FPR_cy=0.000  TPR_ve=0.992 FPR_ve=0.015
+  thr=0.600  P_cy=0.920 R_cy=0.920  P_ve=0.274 R_ve=0.980  TPR_cy=0.992 FPR_cy=0.000  TPR_ve=0.985 FPR_ve=0.015
+  thr=0.625  P_cy=0.929 R_cy=0.920  P_ve=0.293 R_ve=0.980  TPR_cy=0.992 FPR_cy=0.000  TPR_ve=0.985 FPR_ve=0.000
+  thr=0.650  P_cy=0.948 R_cy=0.920  P_ve=0.318 R_ve=0.980  TPR_cy=0.992 FPR_cy=0.000  TPR_ve=0.985 FPR_ve=0.000
+  thr=0.675  P_cy=0.948 R_cy=0.920  P_ve=0.340 R_ve=0.960  TPR_cy=0.984 FPR_cy=0.000  TPR_ve=0.977 FPR_ve=0.000
+  thr=0.700  P_cy=0.958 R_cy=0.920  P_ve=0.367 R_ve=0.940  TPR_cy=0.977 FPR_cy=0.000  TPR_ve=0.970 FPR_ve=0.000
+  thr=0.750  P_cy=0.968 R_cy=0.910  P_ve=0.445 R_ve=0.890  TPR_cy=0.969 FPR_cy=0.000  TPR_ve=0.939 FPR_ve=0.000
+  thr=0.800  P_cy=0.978 R_cy=0.910  P_ve=0.559 R_ve=0.800  TPR_cy=0.969 FPR_cy=0.000  TPR_ve=0.909 FPR_ve=0.000
+  thr=0.850  P_cy=1.000 R_cy=0.860  P_ve=0.667 R_ve=0.620  TPR_cy=0.953 FPR_cy=0.000  TPR_ve=0.803 FPR_ve=0.000
+  thr=0.900  P_cy=1.000 R_cy=0.810  P_ve=0.861 R_ve=0.310  TPR_cy=0.914 FPR_cy=0.000  TPR_ve=0.462 FPR_ve=0.000
+  thr=0.950  P_cy=1.000 R_cy=0.610  P_ve=1.000 R_ve=0.000  TPR_cy=0.719 FPR_cy=0.000  TPR_ve=0.000 FPR_ve=0.000
+C:\Users\kosuke\study\400MHz変更用\eval_pr_roc.py:299: DeprecationWarning: `trapz` is deprecated. Use `trapezoid` instead, or one of the numerical integration functions in `scipy.integrate`.
+  return float(np.trapz(p_env, r))
+  AP_cy=0.3688  AP_ve=0.7195  mAP=0.5441
+
+==================================================
+[D_dw_fp0.001_single] PR/ROC 評価開始
+  thr=0.050  P_cy=0.187 R_cy=0.990  P_ve=0.129 R_ve=1.000  TPR_cy=1.000 FPR_cy=0.008  TPR_ve=1.000 FPR_ve=0.985
+  thr=0.100  P_cy=0.271 R_cy=0.980  P_ve=0.188 R_ve=1.000  TPR_cy=1.000 FPR_cy=0.000  TPR_ve=1.000 FPR_ve=0.962
+  thr=0.150  P_cy=0.351 R_cy=0.980  P_ve=0.243 R_ve=0.980  TPR_cy=1.000 FPR_cy=0.000  TPR_ve=0.992 FPR_ve=0.902
+  thr=0.200  P_cy=0.408 R_cy=0.980  P_ve=0.293 R_ve=0.970  TPR_cy=1.000 FPR_cy=0.000  TPR_ve=0.992 FPR_ve=0.841
+  thr=0.200  P_cy=0.408 R_cy=0.980  P_ve=0.293 R_ve=0.970  TPR_cy=1.000 FPR_cy=0.000  TPR_ve=0.992 FPR_ve=0.841
+  thr=0.225  P_cy=0.453 R_cy=0.970  P_ve=0.320 R_ve=0.970  TPR_cy=1.000 FPR_cy=0.000  TPR_ve=0.985 FPR_ve=0.788
+  thr=0.250  P_cy=0.480 R_cy=0.970  P_ve=0.350 R_ve=0.970  TPR_cy=1.000 FPR_cy=0.000  TPR_ve=0.977 FPR_ve=0.742
+  thr=0.275  P_cy=0.513 R_cy=0.970  P_ve=0.379 R_ve=0.970  TPR_cy=0.992 FPR_cy=0.000  TPR_ve=0.977 FPR_ve=0.674
+  thr=0.300  P_cy=0.524 R_cy=0.970  P_ve=0.399 R_ve=0.970  TPR_cy=0.992 FPR_cy=0.000  TPR_ve=0.977 FPR_ve=0.636
+  thr=0.325  P_cy=0.551 R_cy=0.970  P_ve=0.432 R_ve=0.960  TPR_cy=0.992 FPR_cy=0.000  TPR_ve=0.977 FPR_ve=0.591
+  thr=0.350  P_cy=0.574 R_cy=0.970  P_ve=0.454 R_ve=0.940  TPR_cy=0.992 FPR_cy=0.000  TPR_ve=0.977 FPR_ve=0.538
+  thr=0.375  P_cy=0.610 R_cy=0.970  P_ve=0.472 R_ve=0.930  TPR_cy=0.992 FPR_cy=0.000  TPR_ve=0.977 FPR_ve=0.455
+  thr=0.400  P_cy=0.662 R_cy=0.960  P_ve=0.503 R_ve=0.910  TPR_cy=0.992 FPR_cy=0.000  TPR_ve=0.970 FPR_ve=0.432
+  thr=0.425  P_cy=0.696 R_cy=0.960  P_ve=0.539 R_ve=0.890  TPR_cy=0.992 FPR_cy=0.000  TPR_ve=0.970 FPR_ve=0.333
+  thr=0.450  P_cy=0.716 R_cy=0.960  P_ve=0.557 R_ve=0.880  TPR_cy=0.992 FPR_cy=0.000  TPR_ve=0.970 FPR_ve=0.265
+  thr=0.475  P_cy=0.768 R_cy=0.960  P_ve=0.575 R_ve=0.880  TPR_cy=0.992 FPR_cy=0.000  TPR_ve=0.970 FPR_ve=0.189
+  thr=0.500  P_cy=0.793 R_cy=0.960  P_ve=0.586 R_ve=0.850  TPR_cy=0.992 FPR_cy=0.000  TPR_ve=0.962 FPR_ve=0.129
+  thr=0.525  P_cy=0.825 R_cy=0.940  P_ve=0.606 R_ve=0.830  TPR_cy=0.992 FPR_cy=0.000  TPR_ve=0.939 FPR_ve=0.091
+  thr=0.550  P_cy=0.862 R_cy=0.940  P_ve=0.686 R_ve=0.830  TPR_cy=0.992 FPR_cy=0.000  TPR_ve=0.932 FPR_ve=0.076
+  thr=0.575  P_cy=0.912 R_cy=0.930  P_ve=0.716 R_ve=0.780  TPR_cy=0.992 FPR_cy=0.000  TPR_ve=0.917 FPR_ve=0.045
+  thr=0.600  P_cy=0.948 R_cy=0.920  P_ve=0.752 R_ve=0.760  TPR_cy=0.992 FPR_cy=0.000  TPR_ve=0.902 FPR_ve=0.023
+  thr=0.625  P_cy=0.958 R_cy=0.910  P_ve=0.777 R_ve=0.730  TPR_cy=0.992 FPR_cy=0.000  TPR_ve=0.879 FPR_ve=0.023
+  thr=0.650  P_cy=0.968 R_cy=0.900  P_ve=0.802 R_ve=0.690  TPR_cy=0.992 FPR_cy=0.000  TPR_ve=0.856 FPR_ve=0.015
+  thr=0.675  P_cy=0.989 R_cy=0.890  P_ve=0.855 R_ve=0.650  TPR_cy=0.992 FPR_cy=0.000  TPR_ve=0.833 FPR_ve=0.015
+  thr=0.700  P_cy=0.989 R_cy=0.890  P_ve=0.892 R_ve=0.580  TPR_cy=0.992 FPR_cy=0.000  TPR_ve=0.780 FPR_ve=0.015
+  thr=0.750  P_cy=0.989 R_cy=0.880  P_ve=0.944 R_ve=0.510  TPR_cy=0.992 FPR_cy=0.000  TPR_ve=0.720 FPR_ve=0.015
+  thr=0.800  P_cy=1.000 R_cy=0.870  P_ve=0.973 R_ve=0.360  TPR_cy=0.992 FPR_cy=0.000  TPR_ve=0.545 FPR_ve=0.008
+  thr=0.850  P_cy=1.000 R_cy=0.850  P_ve=1.000 R_ve=0.230  TPR_cy=0.984 FPR_cy=0.000  TPR_ve=0.333 FPR_ve=0.000
+  thr=0.900  P_cy=1.000 R_cy=0.840  P_ve=1.000 R_ve=0.050  TPR_cy=0.984 FPR_cy=0.000  TPR_ve=0.129 FPR_ve=0.000
+  thr=0.950  P_cy=1.000 R_cy=0.790  P_ve=1.000 R_ve=0.000  TPR_cy=0.969 FPR_cy=0.000  TPR_ve=0.000 FPR_ve=0.000
+  AP_cy=0.1779  AP_ve=0.8459  mAP=0.5119
+
+==================================================
+[D_dw_fp0.001_mixed] PR/ROC 評価開始
+  thr=0.050  P_cy=0.253 R_cy=1.000  P_ve=0.157 R_ve=1.000  TPR_cy=1.000 FPR_cy=0.594  TPR_ve=1.000 FPR_ve=0.856
+  thr=0.100  P_cy=0.366 R_cy=1.000  P_ve=0.213 R_ve=1.000  TPR_cy=1.000 FPR_cy=0.375  TPR_ve=1.000 FPR_ve=0.576
+  thr=0.150  P_cy=0.488 R_cy=1.000  P_ve=0.270 R_ve=0.980  TPR_cy=0.992 FPR_cy=0.156  TPR_ve=0.992 FPR_ve=0.295
+  thr=0.200  P_cy=0.631 R_cy=0.990  P_ve=0.317 R_ve=0.970  TPR_cy=0.992 FPR_cy=0.023  TPR_ve=0.992 FPR_ve=0.106
+  thr=0.200  P_cy=0.631 R_cy=0.990  P_ve=0.317 R_ve=0.970  TPR_cy=0.992 FPR_cy=0.023  TPR_ve=0.992 FPR_ve=0.106
+  thr=0.225  P_cy=0.697 R_cy=0.990  P_ve=0.344 R_ve=0.960  TPR_cy=0.992 FPR_cy=0.016  TPR_ve=0.992 FPR_ve=0.030
+  thr=0.250  P_cy=0.766 R_cy=0.980  P_ve=0.379 R_ve=0.960  TPR_cy=0.992 FPR_cy=0.008  TPR_ve=0.992 FPR_ve=0.023
+  thr=0.275  P_cy=0.808 R_cy=0.970  P_ve=0.398 R_ve=0.960  TPR_cy=0.992 FPR_cy=0.008  TPR_ve=0.992 FPR_ve=0.008
+  thr=0.300  P_cy=0.858 R_cy=0.970  P_ve=0.419 R_ve=0.960  TPR_cy=0.992 FPR_cy=0.000  TPR_ve=0.992 FPR_ve=0.008
+  thr=0.325  P_cy=0.882 R_cy=0.970  P_ve=0.440 R_ve=0.960  TPR_cy=0.992 FPR_cy=0.000  TPR_ve=0.992 FPR_ve=0.008
+  thr=0.350  P_cy=0.907 R_cy=0.970  P_ve=0.457 R_ve=0.950  TPR_cy=0.992 FPR_cy=0.000  TPR_ve=0.985 FPR_ve=0.000
+  thr=0.375  P_cy=0.960 R_cy=0.970  P_ve=0.482 R_ve=0.950  TPR_cy=0.992 FPR_cy=0.000  TPR_ve=0.985 FPR_ve=0.000
+  thr=0.400  P_cy=0.979 R_cy=0.950  P_ve=0.495 R_ve=0.950  TPR_cy=0.984 FPR_cy=0.000  TPR_ve=0.977 FPR_ve=0.000
+  thr=0.425  P_cy=1.000 R_cy=0.940  P_ve=0.516 R_ve=0.950  TPR_cy=0.984 FPR_cy=0.000  TPR_ve=0.970 FPR_ve=0.000
+  thr=0.450  P_cy=1.000 R_cy=0.940  P_ve=0.537 R_ve=0.940  TPR_cy=0.984 FPR_cy=0.000  TPR_ve=0.970 FPR_ve=0.000
+  thr=0.475  P_cy=1.000 R_cy=0.940  P_ve=0.550 R_ve=0.940  TPR_cy=0.984 FPR_cy=0.000  TPR_ve=0.970 FPR_ve=0.000
+  thr=0.500  P_cy=1.000 R_cy=0.940  P_ve=0.563 R_ve=0.940  TPR_cy=0.984 FPR_cy=0.000  TPR_ve=0.970 FPR_ve=0.000
+  thr=0.525  P_cy=1.000 R_cy=0.930  P_ve=0.599 R_ve=0.940  TPR_cy=0.984 FPR_cy=0.000  TPR_ve=0.970 FPR_ve=0.000
+  thr=0.550  P_cy=1.000 R_cy=0.920  P_ve=0.612 R_ve=0.930  TPR_cy=0.984 FPR_cy=0.000  TPR_ve=0.970 FPR_ve=0.000
+  thr=0.575  P_cy=1.000 R_cy=0.910  P_ve=0.641 R_ve=0.930  TPR_cy=0.984 FPR_cy=0.000  TPR_ve=0.970 FPR_ve=0.000
+  thr=0.600  P_cy=1.000 R_cy=0.910  P_ve=0.650 R_ve=0.930  TPR_cy=0.984 FPR_cy=0.000  TPR_ve=0.970 FPR_ve=0.000
+  thr=0.625  P_cy=1.000 R_cy=0.900  P_ve=0.664 R_ve=0.930  TPR_cy=0.984 FPR_cy=0.000  TPR_ve=0.970 FPR_ve=0.000
+  thr=0.650  P_cy=1.000 R_cy=0.890  P_ve=0.679 R_ve=0.930  TPR_cy=0.984 FPR_cy=0.000  TPR_ve=0.970 FPR_ve=0.000
+  thr=0.675  P_cy=1.000 R_cy=0.880  P_ve=0.705 R_ve=0.910  TPR_cy=0.984 FPR_cy=0.000  TPR_ve=0.970 FPR_ve=0.000
+  thr=0.700  P_cy=1.000 R_cy=0.880  P_ve=0.734 R_ve=0.910  TPR_cy=0.984 FPR_cy=0.000  TPR_ve=0.970 FPR_ve=0.000
+  thr=0.750  P_cy=1.000 R_cy=0.860  P_ve=0.761 R_ve=0.890  TPR_cy=0.977 FPR_cy=0.000  TPR_ve=0.939 FPR_ve=0.000
+  thr=0.800  P_cy=1.000 R_cy=0.850  P_ve=0.840 R_ve=0.890  TPR_cy=0.977 FPR_cy=0.000  TPR_ve=0.939 FPR_ve=0.000
+  thr=0.850  P_cy=1.000 R_cy=0.820  P_ve=0.914 R_ve=0.850  TPR_cy=0.961 FPR_cy=0.000  TPR_ve=0.939 FPR_ve=0.000
+  thr=0.900  P_cy=1.000 R_cy=0.780  P_ve=0.951 R_ve=0.780  TPR_cy=0.953 FPR_cy=0.000  TPR_ve=0.886 FPR_ve=0.000
+  thr=0.950  P_cy=1.000 R_cy=0.620  P_ve=1.000 R_ve=0.550  TPR_cy=0.883 FPR_cy=0.000  TPR_ve=0.720 FPR_ve=0.000
+  AP_cy=0.3703  AP_ve=0.3825  mAP=0.3764
+
+JSON保存: ./eval_pr_roc_results\pr_roc_results.json
+PR 曲線保存完了
+C:\Users\kosuke\study\400MHz変更用\eval_pr_roc.py:527: DeprecationWarning: `trapz` is deprecated. Use `trapezoid` instead, or one of the numerical integration functions in `scipy.integrate`.
+  auc  = float(np.trapz(sorted(tprs), sorted(fprs)))
+ROC 曲線保存完了
+AP サマリー保存完了
+CFAR recall vs FP 保存完了
+
+============================================================
+AP / mAP サマリー
+run                              AP_cy   AP_ve     mAP
+------------------------------------------------------------
+D_tk3_fp0.001_mixed             0.3688  0.7195  0.5441
+D_dw_fp0.001_single             0.1779  0.8459  0.5119
+D_dw_fp0.001_mixed              0.3703  0.3825  0.3764
+============================================================
+レポート保存: ./eval_pr_roc_results\report.md
+
+完了。結果は ./eval_pr_roc_results/ に保存されました。
