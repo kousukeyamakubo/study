@@ -457,7 +457,7 @@ def main_visualize():
     visualizer = ResultVisualizer(csv_dir="csv_result")
     
     #print("Plotting 2D trajectory...")
-    #visualizer.plot_trajectory_2d()
+    visualizer.plot_trajectory_2d()
     
     print("Plotting position error...")
     #visualizer.plot_position_error()

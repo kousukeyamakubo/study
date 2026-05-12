@@ -22,7 +22,7 @@ matplotlib.rcParams['font.family'] = 'Meiryo'
 
 # ===== 定数 =====
 MIXED_META_CSV  = "../../learn_dataset_fixed_angle/metadata.csv"
-OUTPUT_DIR      = "./cfar_pr_ap_results"
+OUTPUT_DIR      = "./for_paper"
 
 N_FIXED      = 10
 FIXED_ANGLES = np.linspace(-5, 5, N_FIXED)
@@ -263,60 +263,79 @@ def run_sweep(preloaded_data, gts):
 def plot_results(best_record, best_curve, top_records, n_gt_total):
     r_best, p_best = best_curve
 
-    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
-    fig.suptitle(
-        f"CFAR PR 曲線 (tar_thresh: None → {TAR_THRESH_MIN:.0f} dB)\n"
-        f"holdout 2-object, 100 samples, GT={n_gt_total}",
-        fontsize=12,
-    )
+    FONT_LABEL  = 18
+    FONT_TICK   = 16
+    FONT_LEGEND = 14
+    FONT_F1     = 12
 
-    # --- 左: 最良設定の PR 曲線 ---
-    ax = axes[0]
+    fig, ax = plt.subplots(figsize=(7, 6))
+
     ax.plot(r_best, p_best, color="steelblue", lw=2,
-            label=f"最良設定 AP={best_record['ap']:.4f}\n"
+            label=f"Best config  AP={best_record['ap']:.4f}\n"
                   f"ta={int(best_record['n_train_a'])} "
                   f"td={int(best_record['n_train_d'])} "
                   f"tr={int(best_record['n_train_r'])} "
                   f"gr={int(best_record['n_guard_r'])} "
                   f"pfa={best_record['pfa']:.0e}")
-    # F1 等高線
+
+    # F1 等高線（F1 値を一定にする PR 上の軌跡）
     for f1_val in [0.1, 0.2, 0.3, 0.4, 0.5]:
         r_arr = np.linspace(0.01, 1.0, 300)
         p_arr = f1_val * r_arr / (2 * r_arr - f1_val)
         valid = (p_arr > 0) & (p_arr <= 1)
-        ax.plot(r_arr[valid], p_arr[valid], "k--", lw=0.6, alpha=0.4)
+        ax.plot(r_arr[valid], p_arr[valid], "k--", lw=0.8, alpha=0.4)
         idx = np.argmin(np.abs(r_arr[valid] - 0.9))
         ax.text(r_arr[valid][idx], p_arr[valid][idx],
-                f"F1={f1_val:.1f}", fontsize=7, color="gray")
-    ax.set_xlabel("Recall"); ax.set_ylabel("Precision")
-    ax.set_xlim(0, 1); ax.set_ylim(0, 1)
-    ax.legend(fontsize=9, loc="upper right"); ax.grid(True)
-    ax.set_title("最良設定の PR 曲線")
+                f"F1={f1_val:.1f}", fontsize=FONT_F1, color="gray")
 
-    # --- 右: AP 上位10設定の棒グラフ ---
-    ax2 = axes[1]
-    top10 = top_records.nlargest(10, "ap")
-    labels = [
-        f"ta={int(r.n_train_a)} td={int(r.n_train_d)}\n"
-        f"gr={int(r.n_guard_r)} pfa={r.pfa:.0e}"
-        for _, r in top10.iterrows()
-    ]
-    bars = ax2.barh(range(len(top10)), top10["ap"].values, color="steelblue", alpha=0.7)
-    ax2.set_yticks(range(len(top10)))
-    ax2.set_yticklabels(labels, fontsize=8)
-    ax2.invert_yaxis()
-    ax2.set_xlabel("AP")
-    ax2.set_title("AP 上位 10 設定")
-    ax2.grid(True, axis="x")
-    for bar, val in zip(bars, top10["ap"].values):
-        ax2.text(val + 0.001, bar.get_y() + bar.get_height()/2,
-                 f"{val:.4f}", va="center", fontsize=8)
+    ax.set_xlabel("Recall",    fontsize=FONT_LABEL)
+    ax.set_ylabel("Precision", fontsize=FONT_LABEL)
+    ax.tick_params(axis="both", labelsize=FONT_TICK)
+    ax.set_xlim(0, 1); ax.set_ylim(0, 1)
+    ax.legend(fontsize=FONT_LEGEND, loc="upper right")
+    ax.grid(True)
+    ax.set_title("Precision-Recall Curve (CFAR)", fontsize=FONT_LABEL)
 
     plt.tight_layout()
     out = os.path.join(OUTPUT_DIR, "cfar_pr_ap.png")
-    plt.savefig(out, dpi=150, bbox_inches="tight")
+    plt.savefig(out, dpi=300, bbox_inches="tight")
     plt.close()
     print(f"プロット保存: {out}", flush=True)
+
+    # --- 棒グラフ: AP 上位 10 設定 ---
+    FONT_LABEL_B  = 18
+    FONT_TICK_B   = 14
+    FONT_VAL_B    = 13
+
+    top10 = top_records.nlargest(10, "ap")
+    labels = [
+        f"ta={int(r.n_train_a)}, td={int(r.n_train_d)}, "
+        f"tr={int(r.n_train_r)}, gr={int(r.n_guard_r)}, pfa={r.pfa:.0e}"
+        for _, r in top10.iterrows()
+    ]
+    ap_max = top10["ap"].max()
+
+    fig2, ax2 = plt.subplots(figsize=(9, 6))
+    bars = ax2.barh(range(len(top10)), top10["ap"].values, color="steelblue", alpha=0.7)
+    ax2.set_yticks(range(len(top10)))
+    ax2.set_yticklabels(labels, fontsize=FONT_TICK_B)
+    ax2.invert_yaxis()
+    ax2.set_xlabel("AP", fontsize=FONT_LABEL_B)
+    ax2.tick_params(axis="x", labelsize=FONT_TICK_B)
+    ax2.set_title("Top-10 CFAR Configurations by AP", fontsize=FONT_LABEL_B)
+    ax2.grid(True, axis="x")
+    # AP 数値をバー内側右端に表示してはみ出しを防ぐ
+    for bar, val in zip(bars, top10["ap"].values):
+        ax2.text(val - ap_max * 0.01, bar.get_y() + bar.get_height() / 2,
+                 f"{val:.4f}", va="center", ha="right",
+                 fontsize=FONT_VAL_B, color="white", fontweight="bold")
+    ax2.set_xlim(0, ap_max * 1.05)
+
+    plt.tight_layout()
+    out2 = os.path.join(OUTPUT_DIR, "cfar_ap_bar.png")
+    plt.savefig(out2, dpi=300, bbox_inches="tight")
+    plt.close()
+    print(f"プロット保存: {out2}", flush=True)
 
 
 # ===== メイン =====
