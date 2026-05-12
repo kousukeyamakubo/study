@@ -1,0 +1,12 @@
+{
+  "model": "best_detector_softmax_heatmap_single_train.pt",
+  "n_eval": 100,
+  "n_gt_cy": 100,
+  "n_gt_ve": 100,
+  "A_TOL": 1,
+  "D_TOL": 2,
+  "R_TOL": 3,
+  "AP_cy": 0.835,
+  "AP_ve": 0.8413,
+  "mAP": 0.8381
+}

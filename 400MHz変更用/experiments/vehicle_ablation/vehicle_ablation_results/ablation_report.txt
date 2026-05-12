@@ -1,0 +1,26 @@
+============================================================
+Vehicle 検出アブレーション分析レポート
+============================================================
+
+【Cycle 1: スコア分布】
+  cy: TP中央値=0.997  FP(wrong)中央値=0.950  FP(noGT)中央値=0.167
+       件数: TP=359, FP(wrong pos)=1, FP(no GT)=132
+  ve: TP中央値=0.996  FP(wrong)中央値=0.735  FP(noGT)中央値=0.025
+       件数: TP=351, FP(wrong pos)=9, FP(no GT)=128
+
+【Cycle 2: シーンタイプ別 AP】
+  Cyclist: AP_all=0.9927  AP_single=1.0000  AP_two=0.9888
+  Vehicle: AP_all=0.9601  AP_single=0.9848  AP_two=0.9257
+
+【Cycle 3: FP ve 位置混同（2物体）】
+  FP ve 件数 = 7
+  ve GT 距離（平均）= 4.43 bins
+  cy GT 距離（平均）= 19.29 bins
+  cy GT より ve GT に近い件数 = 5/7
+
+【出力ファイル】
+  cycle1_score_dist.png
+  cycle2_scene_ap.png
+  cycle3_fp_position.png
+  cycle3_fp_ve_detail.csv
+  ablation_report.txt
