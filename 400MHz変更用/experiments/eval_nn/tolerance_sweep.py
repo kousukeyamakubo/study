@@ -22,7 +22,7 @@ import torch.nn.functional as F
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR   = os.path.normpath(os.path.join(SCRIPT_DIR, "../.."))
 
-MODEL_PATH      = os.path.join(ROOT_DIR, "best_detector_narrow_angle.pt")
+MODEL_PATH      = os.path.join(ROOT_DIR, "models", "best_detector_narrow_angle.pt")
 SINGLE_META_CSV = os.path.join(ROOT_DIR, "learn_dataset_single_object",       "metadata.csv")
 FIXED_META_CSV  = os.path.join(ROOT_DIR, "learn_dataset_narrow_angle_fixed",  "metadata.csv")
 OUTPUT_DIR      = os.path.join(SCRIPT_DIR, "tolerance_sweep_results")

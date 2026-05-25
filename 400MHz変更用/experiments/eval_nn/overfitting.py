@@ -25,7 +25,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR   = os.path.normpath(os.path.join(SCRIPT_DIR, "../.."))
 
 # 狭角度グリッド実験用: パスと角度設定を変更
-MODEL_PATH      = os.path.join(ROOT_DIR, "best_detector_narrow_angle.pt")
+MODEL_PATH      = os.path.join(ROOT_DIR, "models", "best_detector_narrow_angle.pt")
 NOTEBOOK_PATH   = os.path.join(ROOT_DIR, "check.ipynb")
 SINGLE_META_CSV = os.path.join(ROOT_DIR, "learn_dataset_narrow_angle_single", "metadata.csv")
 FIXED_META_CSV  = os.path.join(ROOT_DIR, "learn_dataset_narrow_angle_fixed",  "metadata.csv")
