@@ -1,4 +1,0 @@
-sigma_r,alpha,beta,best_val_loss,best_epoch,final_val_cy_hit,final_val_ve_hit,model_path
-5.0,2,8,0.04276,25,0.8929,0.0938,./sweep_models\best_sr5.0_a2_b8.pt
-5.0,3,8,0.00066,29,0.9286,0.0625,./sweep_models\best_sr5.0_a3_b8.pt
-5.0,4,8,0.07592,26,0.8036,0.1875,./sweep_models\best_sr5.0_a4_b8.pt
