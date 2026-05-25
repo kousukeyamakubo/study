@@ -1,0 +1,12 @@
+{
+  "model": "best_detector_narrow_angle.pt",
+  "n_eval": 100,
+  "n_gt_cy": 100,
+  "n_gt_ve": 100,
+  "A_TOL": 1,
+  "D_TOL": 2,
+  "R_TOL": 3,
+  "AP_cy": 0.6554,
+  "AP_ve": 0.8944,
+  "mAP": 0.7749
+}

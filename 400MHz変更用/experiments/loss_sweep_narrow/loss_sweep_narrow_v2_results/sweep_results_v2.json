@@ -1,0 +1,98 @@
+{
+  "config": {
+    "GAMMA_VALUES": [
+      3.0,
+      4.0,
+      5.0
+    ],
+    "ALPHA_POS_VALUES": [
+      400.0,
+      500.0,
+      600.0
+    ],
+    "EPOCHS": 30,
+    "LR": 0.0001,
+    "BATCH_SIZE": 8
+  },
+  "results": [
+    {
+      "gamma": 3.0,
+      "alpha_pos": 400.0,
+      "best_val_loss": 0.0001,
+      "AP_cy": 0.7938,
+      "AP_ve": 0.5833,
+      "mAP": 0.6885
+    },
+    {
+      "gamma": 3.0,
+      "alpha_pos": 500.0,
+      "best_val_loss": 0.0001,
+      "AP_cy": 0.6955,
+      "AP_ve": 0.6632,
+      "mAP": 0.6794
+    },
+    {
+      "gamma": 3.0,
+      "alpha_pos": 600.0,
+      "best_val_loss": 0.0002,
+      "AP_cy": 0.7159,
+      "AP_ve": 0.5816,
+      "mAP": 0.6487
+    },
+    {
+      "gamma": 4.0,
+      "alpha_pos": 400.0,
+      "best_val_loss": 0.0002,
+      "AP_cy": 0.7476,
+      "AP_ve": 0.5243,
+      "mAP": 0.6359
+    },
+    {
+      "gamma": 4.0,
+      "alpha_pos": 500.0,
+      "best_val_loss": 0.0001,
+      "AP_cy": 0.8472,
+      "AP_ve": 0.7665,
+      "mAP": 0.8069
+    },
+    {
+      "gamma": 4.0,
+      "alpha_pos": 600.0,
+      "best_val_loss": 0.0001,
+      "AP_cy": 0.6431,
+      "AP_ve": 0.6242,
+      "mAP": 0.6337
+    },
+    {
+      "gamma": 5.0,
+      "alpha_pos": 400.0,
+      "best_val_loss": 0.0001,
+      "AP_cy": 0.7832,
+      "AP_ve": 0.7671,
+      "mAP": 0.7751
+    },
+    {
+      "gamma": 5.0,
+      "alpha_pos": 500.0,
+      "best_val_loss": 0.0002,
+      "AP_cy": 0.6531,
+      "AP_ve": 0.5393,
+      "mAP": 0.5962
+    },
+    {
+      "gamma": 5.0,
+      "alpha_pos": 600.0,
+      "best_val_loss": 0.0001,
+      "AP_cy": 0.7513,
+      "AP_ve": 0.6924,
+      "mAP": 0.7219
+    }
+  ],
+  "best": {
+    "gamma": 4.0,
+    "alpha_pos": 500.0,
+    "mAP": 0.8069,
+    "AP_cy": 0.8472,
+    "AP_ve": 0.7665
+  }
+}
