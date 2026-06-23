@@ -22,7 +22,7 @@ from torch.utils.data import Dataset, DataLoader
 
 # ===== パス =====
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-ROOT_DIR   = os.path.normpath(os.path.join(SCRIPT_DIR, "../.."))
+ROOT_DIR   = os.path.normpath(os.path.join(SCRIPT_DIR, "../../.."))
 
 SINGLE_META_CSV  = os.path.join(ROOT_DIR, "learn_dataset_single_object", "metadata.csv")
 FIXED_META_CSV   = os.path.join(ROOT_DIR, "learn_dataset_fixed_angle",   "metadata.csv")
@@ -43,11 +43,10 @@ EPOCHS       = 30
 LR           = 1e-4
 
 # ===== sweep グリッド =====
-GAMMA_VALUES     = [1.0, 2.0, 3.0, 4.0, 5.0]
-ALPHA_POS_VALUES = [200.0, 500.0, 1000.0]
+GAMMA_VALUES     = [5.0]
+ALPHA_POS_VALUES = [500.0]
 
-# wide_gamma4_eval で既に計算済み
-DONE = {(4.0, 500.0)}
+DONE = set()
 
 # ===== Stage 4 評価設定 =====
 A_TOLS = [0, 1]
