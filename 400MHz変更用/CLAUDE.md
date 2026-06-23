@@ -10,7 +10,10 @@
 | `check.ipynb` | メイン: 学習・評価・可視化 |
 | `learn_data_generator.ipynb` | データセット生成 |
 | `monte-carlo-simulation.ipynb` | モンテカルロ評価・CFAR比較 |
-| `best_detector_agnostic.pt` | 現在の最良モデル重み |
+| `0601meeting/rad_from_csv.ipynb` | WaveFarer CSV → RD マップ変換（現フェーズの検証中心） |
+| `main.ipynb` | システムパラメータ・SNR計算（2GHz/400MHz比較） |
+| `calculate_SNR.ipynb` | SNR計算補助 |
+| `models/best_detector_narrow_angle.pt` | 現在の最良モデル重み（narrow角度グリッド対応） |
 
 ## docs/ 案内
 
@@ -18,16 +21,44 @@
 
 | ファイル | 内容 | 読むべき場面 |
 |---|---|---|
-| `docs/overview.md` | 研究背景・レーダー仕様・問題設定 | 研究の全体像を把握したいとき |
-| `docs/dataset.md` | データセット仕様・生成条件・分割 | データ生成やデータ形式を扱うとき |
+| `docs/overview.md` | 研究背景・研究の流れ・問題設定 | 研究の全体像を把握したいとき |
+| `docs/simulation.md` | レーダー仕様・WaveFarer・物理的注意事項 | シミュレーションを触るとき |
+| `docs/dataset.md` | 角度グリッド・データセット仕様・分割 | データ生成やデータ形式を扱うとき |
 | `docs/model.md` | モデル構造・損失関数・学習設定 | モデルの改修や学習条件変更のとき |
 | `docs/experiments.md` | 実験結果・現状の課題・分析 | 実験の議論・次の方針を考えるとき |
-| `docs/rules.md` | コーディング規則・命名・運用方針 | （下記にインライン化済み） |
+
+## ドキュメント鮮度チェック
+
+**セッション開始時に必ず実行すること:**
+
+以下の2コマンドを実行し、docs/ の最終更新日とその後のコード変更を確認する。
+
+```
+git log -1 --format="%cr" -- docs/
+git log --since="7 days ago" --oneline
+```
+
+`docs/` の最終更新が7日以上前、かつ直近コミットに docs/ 以外の変更が含まれている場合、
+セッションの最初に「docs/ を更新しますか？」とユーザーに確認する。
+
+更新が必要な可能性が高い項目:
+- ブランチ名・最良モデルのパスが変わっていないか（CLAUDE.md）
+- 新しいデータセットが追加されていないか（docs/dataset.md）
+- 実験結果・課題が変わっていないか（docs/experiments.md）
+- モデル構造・学習設定が変わっていないか（docs/model.md）
 
 ## ミーティングメモ
 
 週次ミーティングの記録は `meeting/YYYY-MM-DD.md` に蓄積。
-コーディング作業時は読まなくてよい。方針議論や振り返りのときだけ参照する。
+
+**セッション開始時に最新ファイルを確認すること:**
+
+```
+ls meeting/
+```
+
+最新の `meeting/YYYY-MM-DD.md` を読み、今週の目的・進捗を把握してからコーディング作業に入る。
+コーディング作業中は読み返さなくてよい。方針議論や振り返りのときだけ参照する。
 
 ## コーディング規則
 
@@ -80,4 +111,4 @@ logits = model(x)
 
 - `main`: 安定版
 - `feature/*`: 機能追加・実験
-- 現在のブランチ: `feature/angle-head-independence`（角度軸追加対応）
+- 現在のブランチ: `feature/narrow-angle-grid`（narrow角度グリッド対応）

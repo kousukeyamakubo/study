@@ -1,8 +1,24 @@
 # データセット仕様
 
+## 角度グリッドの種類
+
+| 種別 | 範囲 | `FIXED_ANGLES` | 用途 |
+|---|---|---|---|
+| wide | ±5°（10° 幅） | `np.linspace(-5, 5, 10)` | DICOMO 提出時のベースライン |
+| narrow | 1°〜4°（3° 幅） | `np.linspace(1, 4, 10)` | 現行。ターゲットが実際に現れる角度帯に絞ったもの |
+
 ## フォルダ構成
 
-### モデル学習・評価に使えるデータセット（N_FIXED=10, 推奨）
+### narrow角度グリッド対応データセット（推奨・現行）
+
+| フォルダ | 内容 | サンプル数 | rd_maps.shape |
+|---|---|---|---|
+| `learn_dataset_narrow_angle_single/` | 単一物体（cy-only / ve-only 混在） | 600件 | (10, 89, 190) |
+| `learn_dataset_narrow_angle_fixed/` | 2物体同時（narrow角度グリッド） | 300件 | (10, 89, 190) |
+| `learn_dataset_narrow_angle_scenario/` | シナリオテスト（r_diff 段階変化） | 31件 | (10, 89, 190) |
+| `learn_dataset_single_angle/` | 単一物体（narrow角度グリッド、別生成） | 600件 | (10, 89, 190) |
+
+### wide角度グリッド対応データセット（旧・参照用）
 
 | フォルダ | 内容 | サンプル数 | rd_maps.shape |
 |---|---|---|---|
@@ -65,6 +81,22 @@
 | `valid` | 有効フラグ（`valid_cyclist` / `valid_vehicle` はなし） |
 
 ## 学習・評価データ分割
+
+### narrow角度グリッド（現行）
+
+`check.ipynb` の `GENERALIZATION_EXPERIMENT = True`（単一物体のみで学習する汎化実験）で学習したモデルを使用。
+
+```
+学習: 単一物体 280件  (narrow_angle_single[0:280])
+検証: 単一物体  60件  (narrow_angle_single[280:340])
+テスト: 2物体 300件全件使用可能  (narrow_angle_fixed[0:])  ※モデルは一切見ていない
+holdout（単一物体）: 260件  (narrow_angle_single[340:], RANDOM_SEED=42 でシャッフル後)
+```
+
+> **注意**: 評価スクリプト（`experiments/eval_nn/`）は旧定義に基づき `narrow_angle_fixed[200:]` の100件のみを使っている。
+> 全300件に拡張可能。
+
+### wide角度グリッド（旧・参照用）
 
 ```
 学習: 単一物体 280件 + 2物体 170件 = 450件  (single_object[0:280] + fixed_angle[0:170])

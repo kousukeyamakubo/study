@@ -5,7 +5,7 @@ tolerance_sweep_narrow.py の wide_best 版。
   MODEL_PATH    : wide_loss_sweep/sweep_models/wide_gamma5.0_alpha500.pt
   FIXED_META_CSV: learn_dataset_fixed_angle/metadata.csv
   FIXED_ANGLES  : np.linspace(-5, 5, N_FIXED)
-  FOR_PAPER_DIR : tolerance_sweep_results/for_paper_pm5deg/
+  FOR_PAPER_DIR : tolerance_sweep_results/for_paper_pm5deg_300/
   JSON出力      : tolerance_sweep_results_wide_best.json（narrowのJSONを上書きしない）
 """
 
@@ -28,7 +28,7 @@ MODEL_PATH      = os.path.join(ROOT_DIR, "experiments", "sweep_wide", "wide_loss
 SINGLE_META_CSV = os.path.join(ROOT_DIR, "learn_dataset_single_object", "metadata.csv")
 FIXED_META_CSV  = os.path.join(ROOT_DIR, "learn_dataset_fixed_angle",   "metadata.csv")
 OUTPUT_DIR      = os.path.join(SCRIPT_DIR, "tolerance_sweep_results")
-FOR_PAPER_DIR   = os.path.join(OUTPUT_DIR, "for_paper_pm5deg")
+FOR_PAPER_DIR   = os.path.join(OUTPUT_DIR, "for_paper_pm5deg_300")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 os.makedirs(FOR_PAPER_DIR, exist_ok=True)
 
@@ -95,11 +95,10 @@ def load_sample(path):
 
 
 def build_eval_df():
-    """learn_dataset_fixed_angle holdout (100件) — 2物体シーンのみ（cy+ve 同時存在）"""
+    """learn_dataset_fixed_angle 全件 (300件) — wideモデルは single_object のみで学習のため全件未使用"""
     fixed = pd.read_csv(FIXED_META_CSV)
     fixed = fixed[fixed["valid_all"] == 1].reset_index(drop=True)
-    fixed = fixed.sample(frac=1, random_state=RANDOM_SEED).reset_index(drop=True)
-    return fixed.iloc[200:].reset_index(drop=True)
+    return fixed.reset_index(drop=True)
 
 
 # ===== 推論（1回のみ）: スコア・検出位置をキャッシュ =====

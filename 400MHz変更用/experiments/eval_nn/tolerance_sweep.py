@@ -26,7 +26,7 @@ MODEL_PATH      = os.path.join(ROOT_DIR, "models", "best_detector_narrow_angle.p
 SINGLE_META_CSV = os.path.join(ROOT_DIR, "learn_dataset_single_object",       "metadata.csv")
 FIXED_META_CSV  = os.path.join(ROOT_DIR, "learn_dataset_narrow_angle_fixed",  "metadata.csv")
 OUTPUT_DIR      = os.path.join(SCRIPT_DIR, "tolerance_sweep_results")
-FOR_PAPER_DIR   = os.path.join(OUTPUT_DIR, "for_paper")
+FOR_PAPER_DIR   = os.path.join(OUTPUT_DIR, "for_paper_300")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 os.makedirs(FOR_PAPER_DIR, exist_ok=True)
 
@@ -93,11 +93,10 @@ def load_sample(path):
 
 
 def build_eval_df():
-    """narrow_angle_fixed holdout (100件) — 2物体シーンのみ（cy+ve 同時存在）"""
+    """narrow_angle_fixed 全件 (300件) — GENERALIZATION_EXPERIMENT=True のためモデルは全件未使用"""
     fixed = pd.read_csv(FIXED_META_CSV)
     fixed = fixed[fixed["valid_all"] == 1].reset_index(drop=True)
-    fixed = fixed.sample(frac=1, random_state=RANDOM_SEED).reset_index(drop=True)
-    return fixed.iloc[200:].reset_index(drop=True)
+    return fixed.reset_index(drop=True)
 
 
 # ===== 推論（1回のみ）: スコア・検出位置をキャッシュ =====
@@ -460,18 +459,17 @@ plt.tight_layout()
 plt.savefig(os.path.join(OUTPUT_DIR, "stage3_pr_rtol_sweep.png"), dpi=150, bbox_inches="tight")
 print("saved: stage3_pr_rtol_sweep.png")
 
-# --- 論文用: coco_AP PR 曲線 2 パネル ---
-ap_cy_avg_coco = float(np.mean([r["AP_cy"] for r in rows_a1]))
-ap_ve_avg_coco = float(np.mean([r["AP_ve"] for r in rows_a1]))
+# --- 論文用: PR 曲線 2 パネル (A_TOL=1, D_TOL=0, R_TOL=1 固定) ---
+rec_r1 = next(r for r in rows_a1 if r["R_TOL"] == 1)
 fig_p, axes_p = plt.subplots(1, 2, figsize=(12, 5))
-for ax, p_key, r_key, cls_label in [
-    (axes_p[0], "precs_cy", "recs_cy", "Cyclist"),
-    (axes_p[1], "precs_ve", "recs_ve", "Vehicle"),
+for ax, p_key, r_key, cls_label, color in [
+    (axes_p[0], "precs_cy", "recs_cy", "Cyclist", "tab:blue"),
+    (axes_p[1], "precs_ve", "recs_ve", "Vehicle",  "tab:orange"),
 ]:
     ap_key = "AP_cy" if cls_label == "Cyclist" else "AP_ve"
-    for rec, c in zip(rows_a1, colors_r):
-        ax.step(rec[r_key], rec[p_key], where="post", color=c, lw=2,
-                label=f"R_TOL={rec['R_TOL']}  AP={rec[ap_key]:.4f}")
+    ax.step(rec_r1[r_key], rec_r1[p_key], where="post", color=color, lw=2,
+            label=f"AP={rec_r1[ap_key]:.4f}")
+    ax.fill_between(rec_r1[r_key], rec_r1[p_key], step="post", alpha=0.15, color=color)
     ax.set_xlabel("Recall",    fontsize=FP_LABEL)
     ax.set_ylabel("Precision", fontsize=FP_LABEL)
     ax.tick_params(axis="both", labelsize=FP_TICK)
@@ -479,13 +477,13 @@ for ax, p_key, r_key, cls_label in [
     ax.set_xlim(0, 1); ax.set_ylim(0, 1.05)
     ax.legend(fontsize=FP_LEGEND); ax.grid(alpha=0.3)
 fig_p.suptitle(
-    f"A_TOL=1, D_TOL=0  AP_cy={ap_cy_avg_coco:.4f}  AP_ve={ap_ve_avg_coco:.4f}",
+    f"A_TOL=1, D_TOL=0, R_TOL=1  AP_cy={rec_r1['AP_cy']:.4f}  AP_ve={rec_r1['AP_ve']:.4f}",
     fontsize=FP_TITLE,
 )
 plt.tight_layout()
 plt.savefig(os.path.join(FOR_PAPER_DIR, "coco_ap_pr_curves.png"), dpi=300, bbox_inches="tight")
 plt.close()
-print("saved (for_paper): coco_ap_pr_curves.png")
+print("saved (for_paper_300): coco_ap_pr_curves.png")
 
 
 # =============================================================

@@ -1,6 +1,15 @@
 # 実験結果・現状の課題
 
-## 現在の最良結果 (best_detector_agnostic.pt)
+## 現在の最良結果 (models/best_detector_narrow_angle.pt)
+
+学習設定: 単一物体 280件 + 2物体 170件（train）/ 単一物体 60件 + 2物体 30件（val）/ 2物体 100件（test）
+データセット: `learn_dataset_narrow_angle_single` + `learn_dataset_narrow_angle_fixed`
+
+詳細な定量評価は `experiments/eval_nn/` を参照。
+
+---
+
+## 旧最良結果 (models/best_detector_agnostic.pt)
 
 学習設定: 単一物体 280件 + 2物体 200件（train）/ 単一物体 60件（val）/ 2物体 100件（test）
 
@@ -52,9 +61,20 @@ r_diff（サイクリスト・車両のレンジビン差）を段階的に変�
 
 ```
 experiments/
-└── <実験名>/
-    ├── <実験スクリプト>.py   ← 実行・評価スクリプト
-    └── <実験名>_results/     ← 出力ファイル（画像・CSV・JSON など）
+├── eval_cfar/        ← CA-CFAR vs NN の PR曲線・AP比較
+├── eval_nn/          ← narrow角度グリッドモデル (best_detector_narrow_angle.pt) の定量評価
+├── sweep_narrow/     ← narrow角度グリッドモデルのハイパーパラメータ探索
+├── sweep_wide/       ← wide角度モデルの探索（narrow移行前）
+└── vehicle_ablation/ ← 車両検出 FP 分析・損失設計根拠
+```
+
+各フォルダの内部構造:
+
+```
+experiments/<カテゴリ>/
+├── README.md               ← 目的・手順の説明
+├── <実験スクリプト>.py     ← 実行・評価スクリプト
+└── <実験名>_results/       ← 出力ファイル（画像・CSV・JSON など）
 ```
 
 ### 命名規則
