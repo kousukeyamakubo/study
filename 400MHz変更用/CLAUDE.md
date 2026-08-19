@@ -110,5 +110,6 @@ logits = model(x)
 ## ブランチ戦略
 
 - `main`: 安定版
-- `feature/*`: 機能追加・実験
+- `week/YYYY-MM-DD`: 週次ミーティングに向けた作業ブランチ。日付は対応する `meeting/YYYY-MM-DD.md` に合わせる
+- `feature/*`: 複数週にまたがる機能単位の作業（角度グリッド対応など、1回のミーティングで区切れないもの）
 - 現在のブランチ: `feature/narrow-angle-grid`（narrow角度グリッド対応）
