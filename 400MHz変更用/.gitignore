@@ -6,3 +6,10 @@ meeting/
 sweep_models/
 sweep_experiment_results_v2/*.pt
 sweep_experiment_results_v3/*.pt
+
+# 生の測定データ・モデル重み（サイズが大きいため追跡しない。0817/.gitignore と同じ方針）
+*.dat
+*.npz
+*.gif
+*.pt
+*.mp4
