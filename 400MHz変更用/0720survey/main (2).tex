@@ -1,0 +1,274 @@
+% 情報ネットワーク学セミナーI 2026 レポート
+% コンパイル: platex -> dvipdfmx (latexmkrc の pdf_mode=3 設定で通る)
+\documentclass[a4paper,10.5pt,dvipdfmx]{jsarticle}
+
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage[dvipdfmx]{hyperref}
+\usepackage{pxjahyper}   % 日本語しおりの文字化け対策
+\usepackage{subcaption}
+
+% 余白を詰めて A4 3〜4 枚に収める
+\usepackage[top=25mm,bottom=25mm,left=22mm,right=22mm]{geometry}
+
+\title{情報ネットワーク学セミナーIレポート}
+\author{33E26030　山久保孝亮}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{はじめに}
+
+本レポートは情報ネットワーク学セミナーIにおける発表内容の要約と，
+発表時の質疑に対する追加検討を述べたものである．
+第\ref{sec:background}章で自身の研究背景，第\ref{sec:paper}章で調査文献の内容，
+第\ref{sec:relation}章で自身の研究との関連を整理し，
+第\ref{sec:qa}章で質疑に対する追加検討を述べる．
+
+\section{自身の研究背景}
+\label{sec:background}
+
+\subsection{交差点における事故防止}
+
+見通しの悪い交差点では，自転車と自動車等の出会い頭の衝突事故が問題となる．（図1）
+車載レーダーは自車から見た視野しか観測できないため，建物等で遮蔽された死角のターゲットを
+検知できない．死角の情報を他車から共有する方式も考えられるが，
+死角を観測できる位置に車両が常に存在するとは限らない．
+また，交差点ごとに路側機を新規設置する方式は，設置費用と維持費用の両面でコストがかかる．
+
+\subsection{既存基地局の活用}
+
+そこで本研究では，ISAC (Integrated Sensing and Communications) により
+既存の5G基地局をセンサとして活用する構成を想定する．
+基地局は既に建物上部に設置されており交差点を俯瞰できるため，
+死角のターゲットを観測しやすい．
+また既設設備を用いるため，追加の設備投資を抑えられる．
+基地局が自転車の位置を推定し，その情報を接近車両へ警告として伝達する利用形態を想定している．（図2）
+\begin{figure}[tb]
+    \centering
+
+    \begin{subfigure}[t]{0.4\textwidth}
+        \centering
+        \includegraphics[height = 5cm]{fig/background.png}
+        \caption{画像1}
+        \label{fig:image1}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.4\textwidth}
+        \centering
+        \includegraphics[height = 5cm]{fig/basestation.png}
+        \caption{画像2}
+        \label{fig:image2}
+    \end{subfigure}
+    \label{fig:comparison}
+\end{figure}
+
+\subsection{時分割ISACによる制約}
+\label{sec:constraint}
+
+想定する方式は時分割ISACであり，5G NRフレームの一部をセンシング用チャープに置き換える．
+既存基地局のハードウェアを流用できる一方，フレームの大部分は通信に割り当てられるため，
+専用レーダーと異なりセンシングに使える時間が限られる．
+連続して送信できるチャープ数が少なくなることから，
+ドップラー方向の分解能と積分利得（SNR）の確保が本研究固有の制約となる．
+
+\subsection{処理フローと検出手法の必要性}
+
+センシングの処理フローは以下の3段からなる．
+
+\begin{enumerate}
+  \item センシング：チャープを送信し，IQデータを受信する．
+  \item 信号処理：FFTにより距離・ドップラーを，ビームフォーミングにより方位を抽出し，
+        距離$\times$ドップラー$\times$方位の3次元テンソルを得る．
+  \item 検出：テンソルからターゲットの座標を推定する．
+\end{enumerate}
+
+以下で調査した文献は，第3段の検出手法についてである．
+レーダーから得られた情報を深層学習に適用して検出を行う手法を検討するため，文献調査を行った．
+
+\section{調査文献}
+\label{sec:paper}
+
+\subsection{概要と位置づけ}
+
+調査対象は文献\cite{9022248}である．
+
+\begin{itemize}
+  \item 表題：Vehicle Detection With Automotive Radar Using Deep Learning on
+        Range-Azimuth-Doppler Tensors
+  \item 著者：Bence Major ら
+  \item 発表：2019 IEEE/CVF International Conference on Computer Vision Workshop (ICCVW)
+  \item 被引用数：181
+\end{itemize}
+
+本文献は，FMCWレーダーから得られる情報を深層学習による車両検出に利用した研究であり，
+座標変換の方式，ドップラー情報の利用方法，時系列処理の有無を比較検証している点に特徴がある．
+すなわち，レーダーの3次元テンソルをネットワークにどう与えるかという
+表現方法の設計空間を体系的に比較した研究として位置づけられる．
+
+\subsection{文献の研究背景}
+
+本文献は車載レーダーを対象としている．車載レーダーはLiDARと比べて低コストであり，
+天候条件や照明の明るさの変化に対してロバストで，長距離センシングが可能という利点を持つ．
+その上で，高速道路において低遅延かつ高精度に車両検出を行うこと，
+具体的には自車周辺の車両の位置・大きさ・速度を推定し，
+自動運転等の周辺認識に利用することを目的としている．
+\begin{figure}[tb]
+    \centering
+    \includegraphics[width=0.5\linewidth]{fig/objective.png}
+    \caption{Caption}
+    \label{fig:placeholder}
+\end{figure}
+
+\subsection{従来手法の課題}
+
+レーダー信号処理では，ピーク検出手法としてCFAR (Constant False Alarm Rate) が一般に用いられる．
+CFARは各注目セルの周囲のトレーニングセルの平均から注目セルごとの閾値を算出し，
+注目セルと比較して検出／非検出を判定する．
+
+CFARの出力は $\{(\mathrm{Range}, \mathrm{Doppler}, \mathrm{Power})\}$ という検出点の集合であり，
+画像のように情報量の多いレーダー信号がスパースな点群へと圧縮される．
+その結果，元の信号が持っていた物体形状や周辺セルの分布情報が失われてしまう．
+この問題意識から，本文献は深層学習を用いてレーダー信号を直接入力する方式を採る．
+
+\subsection{深層学習で扱う際の設計課題}
+
+レーダーで得られる情報は距離 (Range)，方位 (Azimuth)，ドップラー (Doppler) の3次元である．
+これを畳み込みネットワークへ入力する際には，以下の2つの設計課題がある．
+
+\begin{itemize}
+  \item 座標系の非均一性：距離$\times$方位は極座標であるため，セル間の物理距離が
+        位置によって異なる．近距離の1ピクセルと遠距離の1ピクセルでは，
+        対応する実空間のサイズが異なる．
+  \item 非空間次元の混在：ドップラーは空間次元ではないため，
+        距離・方位と同様に扱うことができない．
+\end{itemize}
+
+\subsection{提案手法}
+
+本文献は上記の課題に対し，以下の3つの軸で設計を比較検証している．
+
+\begin{itemize}
+  \item 扱う座標系：極座標と直交座標の組み合わせ計4通りを比較する．
+  \item ドップラー情報の利用方法：距離$\times$方位のみを用いるモデルと，
+        距離$\times$方位・距離$\times$ドップラー・方位$\times$ドップラーの各2次元ビューの
+        特徴を融合するRADモデルを比較する．
+  \item 時系列情報の利用：LSTMの有無を比較する．
+\end{itemize}
+
+\subsection{結果}
+\label{sec:result}
+
+\begin{itemize}
+  \item 座標系：極座標入力を明示的に直交座標へ変換する方式が最良の結果となった．
+  \item ドップラー情報を扱うべきか：使用モデルに依存する．
+        特にLSTM併用時には，ドップラー情報を追加しても性能向上は確認されなかった．
+  \item PR曲線（RA-LSTMモデル）：閾値を下げてもRecallが90\%程度で頭打ちとなった．
+        レーダー信号中に反射として現れないターゲットが一定数含まれる可能性が示唆される．
+\end{itemize}
+\begin{figure}[tb]
+    \centering
+
+    \begin{subfigure}[t]{0.4\textwidth}
+        \centering
+        \includegraphics[height = 3cm]{fig/polar.png}
+        \caption{画像1}
+        \label{fig:image1}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.4\textwidth}
+        \centering
+        \includegraphics[height = 3cm]{fig/doppler.png}
+        \caption{画像2}
+        \label{fig:image2}
+    \end{subfigure}
+    \label{fig:comparison}
+\end{figure}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\linewidth]{fig/PR.png}
+    \caption{Caption}
+    \label{fig:placeholder}
+\end{figure}
+\section{自身の研究との関連}
+\label{sec:relation}
+
+本文献と自身の研究の対応関係を表\ref{tab:relation}に示す．
+
+\begin{table}[htbp]
+  \centering
+  \caption{調査文献と自身の研究の比較}
+  \label{tab:relation}
+  \begin{tabular}{lll}
+    \toprule
+    観点 & 調査文献 & 自身の研究 \\
+    \midrule
+    対象環境 & 車載レーダ・高速道路 & 基地局レーダ・交差点 \\
+    検出対象 & 主に車両 & 自転車・車両等 \\
+    センサ・制約 & FMCWレーダ & 基地局ISACによるセンシング資源制約 \\
+    想定範囲 & 0〜45\,m & 長距離（最大300\,m程度） \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+対象環境や条件が異なるため，本文献の知見をそのまま適用するのではなく，
+実データの収集と検証を行いながら，以下の要素を段階的に導入する方針とする．
+
+\begin{itemize}
+  \item 座標変換：極座標入力を直交座標へ変換する方式の導入．
+  \item 入力情報の扱い：距離・ドップラー情報と角度情報の与え方の設計．
+  \item 時系列処理：複数フレームの利用．
+\end{itemize}
+
+\section{質疑応答に対する追加検討}
+\label{sec:qa}
+
+% ============================================================
+% TODO: 実際に受けた質問に差し替える．
+% 以下は発表前に想定していた質疑に対する検討内容であり，
+% 実際の質疑内容に応じて取捨選択・追記すること．
+% ============================================================
+
+\subsection{ターゲットの速度について}
+関連研究では対向車についてどのような扱いをしているのかという指摘を受けた．
+私の研究においては，固定基地局を使用するため上述の対向車線の大きい相対速度のターゲットが現れるわけではないと想定している．
+ただ懸念として，
+
+\subsection{歩行者の考慮について}
+将来的に歩行者などを想定するのかという指摘を受けた．
+現状は自転車と自動車の分類タスクとして想定しているが，自転車と歩行者の分離はより難しいタスクになると考えられる．
+ただし本研究の背景の出合頭の衝突事故という観点においては，急激に止まることの難しい乗り物に集中するという方針である．
+したがって，事故防止という観点では歩行者を考慮する必要はないと考えているが，インフラの活用というより広い視点においては考慮していく必要があると考えている．
+
+\subsection{実データでの実験の想定について}
+実データでの実験についてどのようなものを考えているのかという指摘を受けた．
+現状は実機での実験の初期段階として情報科学研究科棟にレーダーを設置し，想定シナリオよりも易しい設定で結果の分析を行っている．
+ただ，将来的には実際に基地局を活用した実験を想定しており，具体的には共同研究先の通信キャリア企業と協力してスマホ等の位置情報を正解ラベルとして活用することを想定している．
+これにより学習データの確保ができるのではと見込んでレーダー側の検証を進めている．
+
+\subsection{想定するターゲット数について}
+どれだけ多くのターゲット数を想定するのかという指摘を受けた．
+現状は自転車1台，自動車1台の検証のみにとどまっているが，具体的にこのシステムが有効活用できる渋滞の中を自転車が抜けてくるようなシナリオに対して適用するためにはより多くの台数を想定する必要があると考えている．
+
+\section{今後の計画}
+
+今後は以下の順序で進める．
+
+\begin{enumerate}
+  \item 実データ収集システムの構築（2026年8月〜9月）：
+        測定環境の整備と，取得データからテンソルを生成するパイプラインの構築．
+  \item 想定シナリオに近い検証（2026年10月〜11月）：
+        同一条件でのシミュレーションと実測の比較，および基地局側の制約の詳細化．
+  \item 実データを用いたモデルの検証（2026年12月〜2027年3月）：
+        実機仕様に合わせたシミュレーションで学習したモデルによる検出性能の評価．
+        あわせて本文献由来の改善要素（座標変換・入力情報の扱い・時系列処理）を段階的に導入する．
+\end{enumerate}
+
+成果の投稿先としては，国際会議はIEEE ITSC等，国内は DICOMO 等を予定している．
+
+\bibliographystyle{unsrt}
+\bibliography{reference}
+
+\end{document}
