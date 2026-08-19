@@ -52,7 +52,26 @@ def foot_of(box: np.ndarray) -> tuple[float, float]:
 # cyclist の統合
 # --------------------------------------------------------------------------
 
-def merge_cyclist(df: pd.DataFrame, iou_thr: float = 0.15) -> pd.DataFrame:
+def _dedup_by_conf(rows: pd.DataFrame, iou_thr: float) -> pd.DataFrame:
+    """信頼度が高い順に見て、既に採用した箱と IoU が閾値を超えるものを間引く（NMS）。
+
+    bicycle/motorcycle は低信頼度だと YOLO が両方の候補を出すことがあるが、
+    ultralytics の NMS はクラスごとに独立して行われるため、別クラス間の重複は
+    自動では消えない。ここで同一物体の二重検出を除く。
+    """
+    if len(rows) <= 1:
+        return rows
+    rows = rows.sort_values("conf", ascending=False)
+    kept_idx, kept_boxes = [], []
+    for idx, r in rows.iterrows():
+        box = r[["x1", "y1", "x2", "y2"]].to_numpy(float)
+        if all(_iou(box, kb) <= iou_thr for kb in kept_boxes):
+            kept_idx.append(idx)
+            kept_boxes.append(box)
+    return rows.loc[kept_idx]
+
+
+def merge_cyclist(df: pd.DataFrame, iou_thr: float = 0.15, dup_iou_thr: float = 0.5) -> pd.DataFrame:
     """COCO の person + bicycle を1つの cyclist にまとめ、person 単独は pedestrian とする。
 
     【なぜ必要か】
@@ -68,11 +87,18 @@ def merge_cyclist(df: pd.DataFrame, iou_thr: float = 0.15) -> pd.DataFrame:
       - bicycle のみ（乗り手を見逃し）→ cyclist とする。接地点はそのまま
       - person のみ → **pedestrian とする**（以前は誤ラベル回避のため捨てていたが、
         識別対象が vehicle → cyclist/pedestrian に変わったため、クラスを立てて拾う）
+
+    【bicycle/motorcycle の二重検出】
+    低信頼度のフレームでは同一の自転車が bicycle と motorcycle の両方として
+    検出されることがある（実測 0816 データで確認）。dup_iou_thr で重なりの強い
+    ものを間引く。9/8 計画の「近接した複数目標の分離」を壊さないよう、person-bike
+    の対応付け閾値（iou_thr=0.15）より高い値（既定 0.5）にして、本当に別々の
+    自転車まで誤統合しないようにしている。
     """
     out = []
     for frame, g in df.groupby("frame", sort=True):
         persons = g[g["cls"] == COCO_PERSON]
-        bikes = g[g["cls"].isin([COCO_BICYCLE, COCO_MOTORCYCLE])]
+        bikes = _dedup_by_conf(g[g["cls"].isin([COCO_BICYCLE, COCO_MOTORCYCLE])], dup_iou_thr)
         used_p = set()
 
         for _, b in bikes.iterrows():
