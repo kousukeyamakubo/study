@@ -7,9 +7,16 @@ sweep_models/
 sweep_experiment_results_v2/*.pt
 sweep_experiment_results_v3/*.pt
 
-# 生の測定データ・モデル重み（サイズが大きいため追跡しない。0817/.gitignore と同じ方針）
-*.dat
+# 仮想環境
+.venv/
+
+# データセット・モデル重み・生データ（別途バックアップ管理、gitでは追跡しない）
+learn_dataset_*/
+models/
+*.pt
 *.npz
 *.gif
-*.pt
+*.dat
 *.mp4
+ped/
+vehicle/

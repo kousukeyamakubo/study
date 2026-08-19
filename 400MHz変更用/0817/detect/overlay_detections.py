@@ -7,6 +7,9 @@
 #   3. **track_id がフレームをまたいで維持されているか** ← 5 fps では切れる懸念がある。
 #      ByteTrack は 30 fps 前提なので、0.2 s で 1 m 動く自転車では IoU が繋がらない場合がある
 #
+# merge_cyclist() を経由してから描画する（9/8 向け変更）。生の person/bicycle ではなく
+# 統合後の cyclist/vehicle/pedestrian で見えるようにするため。
+#
 # 依存: opencv-python, pandas
 #
 # 使い方:
@@ -26,17 +29,15 @@ from pathlib import Path
 # パッケージ化せずパスを通す方式にしている
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "lib"))
 
-from detections import CLS_CYCLIST, CLS_VEHICLE, COCO_BICYCLE, COCO_MOTORCYCLE, COCO_PERSON, VEHICLE_COCO
+from detections import CLS_CYCLIST, CLS_PEDESTRIAN, CLS_VEHICLE, merge_cyclist
 
 IMG_EXT = {".jpg", ".jpeg", ".png", ".bmp"}
 FRAME_PERIOD_S = 0.2
 
-# BGR。cyclist を構成する person/bicycle は同系色にして、統合前でも対応が読めるようにする
-COLORS = {COCO_PERSON: (80, 200, 80), COCO_BICYCLE: (40, 255, 160),
-          COCO_MOTORCYCLE: (40, 255, 160)}
+# BGR。merge_cyclist() 後の3クラス（cyclist/vehicle/pedestrian）を描く。
+# 生の COCO クラス（person/bicycle 個別）はここでは扱わない。
+COLORS = {CLS_CYCLIST: (40, 255, 160), CLS_PEDESTRIAN: (80, 200, 80)}
 VEHICLE_COLOR = (60, 160, 255)
-NAMES = {COCO_PERSON: "person", COCO_BICYCLE: "bicycle", COCO_MOTORCYCLE: "motorcycle",
-         2: "car", 5: "bus", 7: "truck"}
 
 
 def iter_frames(src: Path):
@@ -59,13 +60,13 @@ def iter_frames(src: Path):
 def draw(im, rows: pd.DataFrame, thick: int, fscale: float):
     """1 フレーム分の bbox・接地点・ラベルを描く。im を破壊的に更新する"""
     for r in rows.itertuples():
-        color = VEHICLE_COLOR if r.cls in VEHICLE_COCO else COLORS.get(r.cls, (200, 200, 200))
+        color = VEHICLE_COLOR if r.cls == CLS_VEHICLE else COLORS.get(r.cls, (200, 200, 200))
         p1, p2 = (int(r.x1), int(r.y1)), (int(r.x2), int(r.y2))
         cv2.rectangle(im, p1, p2, color, thick)
         # 接地点。ラベルの正本になる一点なので、bbox より目立たせる
         cv2.drawMarker(im, (int(r.foot_u), int(r.foot_v)), (0, 0, 255),
                        cv2.MARKER_CROSS, 20 * thick, thick + 1)
-        label = f"{NAMES.get(r.cls, r.cls)} #{r.track_id} {r.conf:.2f}"
+        label = f"{r.cls} #{r.track_id} {r.conf:.2f}"
         # 枠の上に置くと画面外に出ることがあるので、上端に近ければ枠の内側に入れる
         ly = p1[1] - 6 if p1[1] > 24 * fscale else p1[1] + int(28 * fscale)
         cv2.putText(im, label, (p1[0], ly),
@@ -83,7 +84,7 @@ def main():
     ap.add_argument("--scale", type=float, default=1.0, help="4K が重いとき 0.5 など")
     args = ap.parse_args()
 
-    df = pd.read_csv(args.csv)
+    df = merge_cyclist(pd.read_csv(args.csv))     # 生の person/bicycle ではなく統合後の3クラスを描く
     by_frame = dict(tuple(df.groupby("frame")))
     out = args.out or args.src.with_suffix("").with_name(args.src.stem + "_overlay.mp4")
 

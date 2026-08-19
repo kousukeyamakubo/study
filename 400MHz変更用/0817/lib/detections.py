@@ -20,7 +20,8 @@ COCO_PERSON, COCO_BICYCLE, COCO_MOTORCYCLE = 0, 1, 3
 COCO_CAR, COCO_BUS, COCO_TRUCK = 2, 5, 7
 
 # 本研究の対象クラス。RD マップ側の {背景=0, cyclist=1, vehicle=2} に対応させる
-CLS_CYCLIST, CLS_VEHICLE = "cyclist", "vehicle"
+# pedestrian は 9/8 に向けて追加（実測での識別対象が vehicle → cyclist/pedestrian に変更されたため）
+CLS_CYCLIST, CLS_VEHICLE, CLS_PEDESTRIAN = "cyclist", "vehicle", "pedestrian"
 VEHICLE_COCO = {COCO_CAR, COCO_BUS, COCO_TRUCK}
 
 COLUMNS = ["frame", "t_s", "track_id", "cls", "conf",
@@ -51,9 +52,8 @@ def foot_of(box: np.ndarray) -> tuple[float, float]:
 # cyclist の統合
 # --------------------------------------------------------------------------
 
-def merge_cyclist(df: pd.DataFrame, iou_thr: float = 0.15,
-                  lone_person_as_cyclist: bool = False) -> pd.DataFrame:
-    """COCO の person + bicycle を1つの cyclist にまとめる。
+def merge_cyclist(df: pd.DataFrame, iou_thr: float = 0.15) -> pd.DataFrame:
+    """COCO の person + bicycle を1つの cyclist にまとめ、person 単独は pedestrian とする。
 
     【なぜ必要か】
     YOLO は自転車に乗った人を person と bicycle の2つの箱で出す。
@@ -66,12 +66,8 @@ def merge_cyclist(df: pd.DataFrame, iou_thr: float = 0.15,
 
     【対応が取れなかった場合】
       - bicycle のみ（乗り手を見逃し）→ cyclist とする。接地点はそのまま
-      - person のみ → **既定では捨てる**（lone_person_as_cyclist=False）
-
-    person 単独を cyclist に含めない理由: 屋外の実測シーンには歩行者が必ず写る
-    （0727/0728 で実際に検出している）ため、含めると歩行者が cyclist ラベルになる。
-    **誤ったラベルは、ラベルが無いことより学習に有害**なので捨てる側を既定にした。
-    自転車の見逃しによる取りこぼしは、追跡 ID で前後フレームから補間する方が安全。
+      - person のみ → **pedestrian とする**（以前は誤ラベル回避のため捨てていたが、
+        識別対象が vehicle → cyclist/pedestrian に変わったため、クラスを立てて拾う）
     """
     out = []
     for frame, g in df.groupby("frame", sort=True):
@@ -104,16 +100,15 @@ def merge_cyclist(df: pd.DataFrame, iou_thr: float = 0.15,
                             x1=box[0], y1=box[1], x2=box[2], y2=box[3],
                             foot_u=fu, foot_v=fv))
 
-        if lone_person_as_cyclist:                   # 既定では歩行者混入を避けて捨てる
-            for pi, p in persons.iterrows():
-                if pi in used_p:
-                    continue
-                pb = p[["x1", "y1", "x2", "y2"]].to_numpy(float)
-                fu, fv = foot_of(pb)
-                out.append(dict(frame=frame, t_s=p["t_s"], track_id=p["track_id"],
-                                cls=CLS_CYCLIST, conf=float(p["conf"]),
-                                x1=pb[0], y1=pb[1], x2=pb[2], y2=pb[3],
-                                foot_u=fu, foot_v=fv))
+        for pi, p in persons.iterrows():              # 自転車と対応が取れなかった person は pedestrian
+            if pi in used_p:
+                continue
+            pb = p[["x1", "y1", "x2", "y2"]].to_numpy(float)
+            fu, fv = foot_of(pb)
+            out.append(dict(frame=frame, t_s=p["t_s"], track_id=p["track_id"],
+                            cls=CLS_PEDESTRIAN, conf=float(p["conf"]),
+                            x1=pb[0], y1=pb[1], x2=pb[2], y2=pb[3],
+                            foot_u=fu, foot_v=fv))
 
         for _, v in g[g["cls"].isin(VEHICLE_COCO)].iterrows():
             vb = v[["x1", "y1", "x2", "y2"]].to_numpy(float)
