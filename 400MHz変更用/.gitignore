@@ -1,4 +1,7 @@
-.claude/
+.claude/*
+!.claude/skills
+.claude/skills/*/templates/*.pptx
+.claude/skills/*/templates/*.potx
 __pycache__/
 *.pyc
 .ipynb_checkpoints/

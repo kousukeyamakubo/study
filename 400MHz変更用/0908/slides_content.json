@@ -1,0 +1,86 @@
+{
+  "cover": {
+    "title": {
+      "ja": "実測パイプライン構築の進捗（0908フェーズ）",
+      "en": "Progress on the Real-World Data Pipeline (Phase 0908)"
+    },
+    "event_name": {
+      "ja": "研究室週次ミーティング",
+      "en": "Weekly Lab Meeting"
+    },
+    "authors": {
+      "ja": "（発表者名を入力してください）",
+      "en": "(Enter presenter name)"
+    },
+    "date": {
+      "ja": "2026年9月8日",
+      "en": "September 8, 2026"
+    },
+    "year": {"ja": "2026", "en": "2026"}
+  },
+  "sections": [
+    {
+      "id": "recap",
+      "layout": "OBJECT",
+      "title": {"ja": "前回のおさらい（8/17）", "en": "Recap of the Last Meeting (Aug 17)"},
+      "bullets": [
+        {"level": 0, "text": {"ja": "sim（グリッド不整合の論点）は一旦保留", "en": "Simulation work (the grid-mismatch question) is on hold for now"}},
+        {"level": 0, "text": {"ja": "主軸は「実測の学習データを集めること」と「後処理を作って結果を見ること」", "en": "Main focus: collect real-world training data, and build post-processing to see actual results"}},
+        {"level": 0, "text": {"ja": "モデルの入力設計（角度情報の渡し方）が論点として浮上、判断は本日9/8へ", "en": "A new open question emerged: how to feed angle information into the model — decision deferred to today (9/8)"}},
+        {"level": 1, "text": {"ja": "案1: DBFで角度軸を作りRADテンソルにする（14.5°量子化＝40mで±10m相当、ラベル精度0.13mとは2桁の差）", "en": "Option 1: Build an angle axis via DBF into a RAD tensor (quantizes to 14.5° ≈ ±10 m at 40 m — two orders of magnitude coarser than the 0.13 m label precision)"}},
+        {"level": 1, "text": {"ja": "案2: RD1枚のドップラーから角度を導く — 単フレームのドップラーは動径速度のみで、角度に直すには速度・進行方向の仮定が必要になり主張自体を弱めるため却下", "en": "Option 2: Derive angle from a single RD frame's Doppler — rejected, since a single frame's Doppler gives only radial velocity, so converting it to angle requires assuming speed and heading, which undermines the claim itself"}},
+        {"level": 1, "text": {"ja": "案3: 複素RD×7素子の位相をそのままモデルに渡す（DBFの分解能限界に縛られないが、実測データ量が性能の天井になる）", "en": "Option 3: Feed the raw complex-RD phase across 7 elements directly (not bounded by DBF's resolution limit, but real-data volume becomes the performance ceiling)"}},
+        {"level": 0, "text": {"ja": "実測で何を示すかも論点となり、撮影シナリオは「バリエーションを並べる」のではなく「それが無いと言えなくなる主張」（分離・識別・定位）に紐づけて決める方針に整理した", "en": "Also had to pin down what the real-world data should demonstrate — settled on tying each shooting scenario to a specific claim (separation, classification, localization) it would otherwise be impossible to support, rather than just collecting variety"}}
+      ]
+    },
+    {
+      "id": "phase_context",
+      "layout": "OBJECT",
+      "title": {"ja": "0908フェーズの目的と全体像", "en": "Goal and Structure of Phase 0908"},
+      "bullets": [
+        {"level": 0, "text": {"ja": "目的: 前回棄却した「ドップラーから角度を導く」案を除いた残り2択「DBFで角度を潰すか、生の位相のまま渡すか」を判断する材料（実測SNR・素子間位相の安定性）を得る", "en": "Goal: gather the evidence (real SNR, inter-element phase stability) needed to decide between the two options left after rejecting the Doppler-derived-angle idea — DBF vs. raw phase"}},
+        {"level": 0, "text": {"ja": "同時に、どちらに転んでも使える実測の学習データを集める", "en": "In parallel, collect real-world training data that will be usable either way"}},
+        {"level": 0, "text": {"ja": "パイプライン: 撮影（レーダー+カメラ同時）→ レーダー: 複素RD抽出／カメラ: YOLO+ByteTrack検出 → 対応付け → 地上座標(X,Y)ラベル化", "en": "Pipeline: simultaneous radar+camera capture → radar: complex RD extraction / camera: YOLO+ByteTrack detection → association → ground-plane (X, Y) labeling"}},
+        {"level": 0, "text": {"ja": "後処理（CFAR+NMS+追尾）と生位相モデルのプロトタイプは、モデル非依存の部品として並行して進められる", "en": "Post-processing (CFAR + NMS + tracking) and the raw-phase model prototype are model-agnostic pieces that can proceed in parallel"}},
+        {"level": 0, "text": {"ja": "机上でできる部品（同期・対応付け骨格・後処理・カメラ較正・.dat設定特定）は完了。ボトルネックは本番撮影の実施そのもの", "en": "All the desk-work components (sync, association skeleton, post-processing, camera calibration, .dat header decoding) are done — the bottleneck is now the actual field shoot"}}
+      ]
+    },
+    {
+      "id": "progress",
+      "layout": "OBJECT",
+      "title": {"ja": "今週の進捗", "en": "Progress This Week"},
+      "bullets": [
+        {"level": 0, "text": {"ja": "H8: .datヘッダのRemove Static Clutterフラグ位置を特定（0x72、1byte）", "en": "H8: Located the Remove-Static-Clutter flag in the .dat header (0x72, 1 byte)"}},
+        {"level": 0, "text": {"ja": "S1: レーダー・カメラの時刻同期を確認（10秒×2本でカメラ枚数=レーダーフレーム数=50が一致）", "en": "S1: Verified radar–camera time sync (camera frame count matches radar frame count, 50=50, over two 10-second runs)"}},
+        {"level": 0, "text": {"ja": "S3: カメラ検出とレーダーピークの対応付けを骨格実装、合成データで検証済み（実測データでの較正はこれから）", "en": "S3: Implemented the camera–radar association skeleton and validated it on synthetic data (calibration on real data is still pending)"}},
+        {"level": 0, "text": {"ja": "S5: 後処理（ピーク抽出→NMS→追尾）を実装、合成データでSNR依存の検出率・トラック連続性を確認", "en": "S5: Implemented post-processing (peak extraction → NMS → tracking) and confirmed SNR-dependent detection rate and track continuity on synthetic data"}},
+        {"level": 0, "text": {"ja": "H3/S2: カメラ内部パラメータKの較正完了（3840×2160、RMS 1.35px）。h・俯角の試算値はまだ信頼性未検証", "en": "H3/S2: Completed intrinsic camera calibration (3840×2160, RMS 1.35 px); the estimated height/tilt angle still needs validation"}},
+        {"level": 0, "text": {"ja": "bicycle/motorcycleの二重検出をmerge_cyclist()側で対応済み", "en": "Resolved duplicate bicycle/motorcycle detections inside merge_cyclist()"}}
+      ]
+    },
+    {
+      "id": "issues",
+      "layout": "OBJECT",
+      "title": {"ja": "課題・論点", "en": "Open Issues"},
+      "bullets": [
+        {"level": 0, "text": {"ja": "本題（DBF vs 生位相）を含め、未確定項目のほとんどが実測データ待ちで足止め中", "en": "Most open items — including the core DBF-vs-raw-phase question — are blocked on real measurement data"}},
+        {"level": 0, "text": {"ja": "クラス識別が「速度のしきい値」に堕ちるリスク: 既存実測ではドップラーだけで歩行者/自転車がきれいに分離してしまう", "en": "Risk that class discrimination collapses into a speed threshold: existing recordings already separate pedestrian vs. cyclist cleanly by Doppler alone"}},
+        {"level": 1, "text": {"ja": "対策: 自転車を歩行速度でゆっくり走らせる本数を撮影計画に混ぜる", "en": "Mitigation: include runs where the cyclist rides at walking speed in the shooting plan"}},
+        {"level": 0, "text": {"ja": "マーカー地物の選定が手動・場所依存のボトルネック候補（ArUco/ChArUcoマーカーへの切替を検討中）", "en": "Manual, location-dependent marker selection is a likely bottleneck — considering a switch to ArUco/ChArUco markers"}},
+        {"level": 0, "text": {"ja": "track_id=-1の扱いは誤結合リスクを優先して保留継続", "en": "Handling of track_id = -1 remains deferred, prioritizing the risk of mismatched associations"}}
+      ]
+    },
+    {
+      "id": "next",
+      "layout": "OBJECT",
+      "title": {"ja": "次にやること", "en": "Next Steps"},
+      "bullets": [
+        {"level": 0, "text": {"ja": "H1: 撮影セッション×2（週末・研究室）— レーダーとカメラを同時に回す", "en": "H1: Two field shooting sessions (weekend, in the lab) — radar and camera running simultaneously"}},
+        {"level": 1, "text": {"ja": "シナリオ: 単独ベースライン、歩行速度cyclist、cyclist+pedestrian近接配置、cyclist×2近接、横切りなど7区分×20本", "en": "Scenarios: solo baselines, walking-speed cyclist, close cyclist+pedestrian, two close cyclists, crossing paths — 7 categories × 20 runs each"}},
+        {"level": 0, "text": {"ja": "8/17指摘6点の残り: 窓開閉比較、Remove Static Clutter ON/OFF比較、リフレクタによる距離軸検証を同一セッションで撮る", "en": "Remaining items from the advisor's 6 points: window open/closed comparison, Remove-Static-Clutter ON/OFF comparison, reflector-based range-axis check — all within the same session"}},
+        {"level": 0, "text": {"ja": "実測データが揃い次第: S3のゲート較正・3体以上の対応付け検証、S4教師テンソル組み立て、DBF vs 生位相の判断", "en": "Once real data is in hand: calibrate S3's association gates, validate 3+-target association, assemble the S4 supervision tensor, and decide DBF vs. raw phase"}},
+        {"level": 0, "text": {"ja": "h・俯角の実測値とチェスボード較正の試算値を突き合わせる", "en": "Cross-check the measured height/tilt angle against the checkerboard-calibration estimate"}}
+      ]
+    }
+  ]
+}
