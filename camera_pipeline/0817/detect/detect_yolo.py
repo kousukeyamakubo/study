@@ -12,7 +12,7 @@
 # 単発検出ではなく track() を使い、フレームをまたいで同一目標に同じ track_id を振る。
 # レーダー側との対応付け（同じ目標の軌跡として照合する）に必要なため。
 #
-# 依存: ultralytics（未導入。導入前に相談すること — CLAUDE.md の規約）
+# 依存: ultralytics（camera_pipeline/.venv に導入済み。requirements.txt を参照）
 #
 # 【入力】動画ファイル、または連番画像のディレクトリ。
 # ATLAS の `.cam` は cam_extract.py で連番 JPEG に展開して渡す（無劣化のため mp4 化しない）。

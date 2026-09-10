@@ -73,18 +73,28 @@ ls ../400MHz変更用/meeting/
 
 ### 依存ライブラリ
 
-- 画像・幾何: `numpy`（`homography.py` はOpenCV非依存）, `opencv-python`（較正時）
-- 検出: `ultralytics`
-- データ: `pandas`
+**venv はこのフォルダ専用**（`camera_pipeline/.venv`。2026-09-10 にレーダー側から分離）。
+直接依存とバージョンは `requirements.txt` に固定してある。
+
+```powershell
+.venv\Scripts\python.exe 0817/detect/detect_yolo.py <video>
+```
+
+- 画像・幾何: `numpy`（`homography.py` はOpenCV非依存）, `opencv-python`
+- 検出: `ultralytics`（`lap` は ByteTrack が要求）
+- データ: `pandas`, `matplotlib`
 - 新たなライブラリを追加する場合は事前に確認する
 
-**venv は現時点ではレーダー側と共有している**（`../400MHz変更用/.venv`。`torch==2.12.1` /
-`ultralytics==8.4.120` / `opencv-python==5.0.0.93` / `numpy==2.5.0` / `pandas==3.0.4`）。
-`camera_pipeline/.venv` を別に立てる方針は決まっているが**未実施**。
+**torch はレーダー側とバージョンを揃えなくてよい**（カメラ側は YOLO 推論にしか使わない）。
+実際カメラ側は 2.14.0、レーダー側は 2.12.1 で、分離時に出力の一致を確認済み
+（`detect_yolo.py` の検出CSVがバイト単位で一致、`chessboard_calib.py` の K も一致）。
 
-分離したい理由は ArUco（H2）で、`cv2.aruco` に必要な `opencv-contrib-python` は
-`opencv-python` と同居できず、共有 venv のまま入れ替えるとレーダー側を巻き込むため。
-分離後は torch のバージョンをレーダー側と揃える必要はない（カメラ側は YOLO 推論にしか使わない）。
+分離した理由は ArUco（H2、`docs/history.md` の未決事項）。`cv2.aruco` に必要な
+`opencv-contrib-python` は `opencv-python` と同居できないため、共有 venv のまま
+入れ替えるとレーダー側を巻き込む。着手時は `requirements.txt` の該当行を差し替える。
+
+`yolo11m.pt`（38MB）は ultralytics が初回実行時にカレントディレクトリへ自動取得する。
+`.gitignore` の `*.pt` で追跡外。
 
 ## ブランチ戦略
 

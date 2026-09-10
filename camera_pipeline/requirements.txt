@@ -1,0 +1,13 @@
+# カメラパイプラインの直接依存。バージョンは分離前の共有 venv（400MHz変更用/.venv）
+# のものをそのまま引き継いでいる。
+#
+# torch / torchvision / pillow / PyYAML などは ultralytics の依存として入るため
+# ここには書かない。カメラ側は torch を YOLO 推論にしか使わないので、
+# レーダー側の学習環境とバージョンを揃える必要はない。
+
+ultralytics==8.4.120
+lap==0.5.13              # ByteTrack が要求する線形割当ソルバ
+opencv-python==5.0.0.93  # ArUco (H2) に着手する際は opencv-contrib-python へ入れ替える
+numpy==2.5.0
+pandas==3.0.4
+matplotlib==3.11.0

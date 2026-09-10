@@ -1,0 +1,12 @@
+# 2026-09-10 のカメラ側分離時点でのレーダー側 venv の直接依存。
+# 分離前の共有 venv をそのまま凍結したもので、まだ整理していない。
+#
+# 注意: torch は現状 ultralytics の依存として入っている（明示指定ではない）。
+# raw_phase_model/ が torch を使うので、venv を作り直す際は torch を明示すること。
+
+torch==2.12.1
+numpy==2.5.0
+matplotlib==3.11.0
+pandas==3.0.4
+pymupdf==1.28.0   # 仕様書PDFの読み取り
+pypdf==6.14.2
