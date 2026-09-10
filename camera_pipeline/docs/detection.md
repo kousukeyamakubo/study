@@ -6,12 +6,17 @@
 ## 導入
 
 ```
-pip install ultralytics "torch==2.12.1"
+.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-**torchのピン留めが必須**。素で入れるとtorchが2.12.1+cpu→2.13.0に上がり、
-メイン側の学習環境（`check.ipynb`・既存の`.pt`重み）に影響する。ピンするとtorchは据え置きで
-`torchvision 0.27.1+cpu`が選ばれる。追跡用の`lap`は初回実行時に自動で入る。
+2026-09-10 に venv をレーダー側から分離したので、**torch を手でピンする必要はなくなった**
+（分離前は共有 venv で、素で入れるとレーダー側の学習環境を巻き込むためピンが必須だった）。
+バージョンは `requirements.txt` の ultralytics のピンに従って決まり、実測で
+**torch 2.14.0+cpu / torchvision 0.29.0+cpu**。追跡用の `lap` は `requirements.txt` に明記。
+
+GPU 機では `requirements-cuda.txt` を追加適用して CUDA 版（`2.14.0+cu130`）に入れ替える。
+速度差と注意点は `../0910/bench/README.md`。
+
 モデル重み（`yolo11n.pt`等）は初回実行時に自動ダウンロードされ、リポジトリには置かない。
 
 ## クラスの扱い（`merge_cyclist`）

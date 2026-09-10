@@ -4,6 +4,8 @@
 # torch / torchvision / pillow / PyYAML などは ultralytics の依存として入るため
 # ここには書かない。カメラ側は torch を YOLO 推論にしか使わないので、
 # レーダー側の学習環境とバージョンを揃える必要はない。
+#
+# GPU 機では CUDA 版 torch を requirements-cuda.txt で上書きする（CPU 機では適用しない）。
 
 ultralytics==8.4.120
 lap==0.5.13              # ByteTrack が要求する線形割当ソルバ

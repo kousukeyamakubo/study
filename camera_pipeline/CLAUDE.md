@@ -26,8 +26,9 @@
 | `0817/capture/cam_extract.py` | `.cam`→連番JPEG抽出、`--dat`で`.dat`フレーム数と枚数照合 |
 | `0908/cam_sync/` | カメラ・レーダーの枚数一致検証（S1・完了） |
 | `0908/yolo_tracking_notes.md` | 実データでのYOLO/ByteTrackの既知問題（未整理・生ノート） |
+| `0910/bench/bench_device.py` | CPU/CUDA の推論速度比較（結果は同フォルダ README） |
 
-日付フォルダ（`0817/`・`0908/`）の運用はレーダー側の慣習を踏襲する。
+日付フォルダ（`0817/`・`0908/`・`0910/`）の運用はレーダー側の慣習を踏襲する。
 
 ## docs/ 案内
 
@@ -88,6 +89,9 @@ ls ../400MHz変更用/meeting/
 **torch はレーダー側とバージョンを揃えなくてよい**（カメラ側は YOLO 推論にしか使わない）。
 実際カメラ側は 2.14.0、レーダー側は 2.12.1 で、分離時に出力の一致を確認済み
 （`detect_yolo.py` の検出CSVがバイト単位で一致、`chessboard_calib.py` の K も一致）。
+**ただしこの一致は CPU ビルド同士の話。** GPU 機（デスクトップ）は `requirements-cuda.txt`
+を追加適用して CUDA 版（`2.14.0+cu130`）にしてあり、GPU を挟むと検出CSVは一致しない
+（FP32 同士でも畳み込み実装が違う）。速度差と注意点は `0910/bench/README.md`。
 
 分離した理由は ArUco（H2、`docs/history.md` の未決事項）。`cv2.aruco` に必要な
 `opencv-contrib-python` は `opencv-python` と同居できないため、共有 venv のまま

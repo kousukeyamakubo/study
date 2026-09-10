@@ -109,12 +109,16 @@ person の下辺で代用する。
 ### 導入したもの
 
 ```
-pip install ultralytics "torch==2.12.1"
+.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-**torch のピン留めが必須**。素で入れると torch が 2.12.1+cpu → 2.13.0 に上がり、
-学習環境（`check.ipynb`・既存の `.pt` 重み）に影響する。ピンすると torch は据え置きで
-`torchvision 0.27.1+cpu` が選ばれる。追跡用の `lap` は初回実行時に自動で入る。
+当時は共有 venv だったため `torch==2.12.1` の手ピンが必須だった（素で入れると 2.13.0 に
+上がり、学習環境の `check.ipynb`・既存の `.pt` 重みを巻き込むため）。2026-09-10 の
+venv 分離でこの制約は消え、いまは `requirements.txt` に従う。実測で
+**torch 2.14.0+cpu / torchvision 0.29.0+cpu**。追跡用の `lap` も `requirements.txt` に明記。
+
+GPU 機では `requirements-cuda.txt` を追加適用して CUDA 版（`2.14.0+cu130`）に入れ替える。
+速度差と注意点は `../0910/bench/README.md`。
 
 モデル重み（`yolo11n.pt` 等）は初回実行時に自動ダウンロードされる。リポジトリには置かない。
 

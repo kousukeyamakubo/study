@@ -1,0 +1,35 @@
+# GPU 機（デスクトップ）でのみ追加適用する。CPU 機（ノートPC）では使わない。
+#
+# 【なぜ requirements.txt に混ぜないか】
+# venv はマシンごとに別（gitignore 済み）で、ノートPCには GPU が無い。共通の
+# requirements.txt に CUDA 版 torch を書くと、ノートPC側の `pip install -r` が
+# 巨大な CUDA ホイールを引いて動かない状態になる。
+#
+# 【なぜ --index-url と +cuXXX ピンの両方が要るか】
+# CUDA 版は PyPI に無く PyTorch 独自インデックスにしかないので --index-url は必須。
+# ただしインデックス指定だけでは足りない。requirements.txt 経由で CPU 版 torch が
+# 既に入っていると、pip は `torch==2.14.0` をローカルバージョン識別子を無視して
+# 照合するため 2.14.0+cpu を「充足済み」と判断し、CUDA 版に入れ替えてくれない
+# （2026-09-10 に実際にこれで素通りした）。+cu130 まで書いて初めて差し替わる。
+# なお --index-url はこのファイル全体の解決先を差し替えるため、ここには
+# torch 系だけを置く（他のパッケージはこのインデックスに無く、解決に失敗する）。
+#
+# 手順（デスクトップ、camera_pipeline/ 直下）:
+#   1. .venv\Scripts\python.exe -m pip show torch      # 今のバージョンを確認
+#   2. nvidia-smi                                      # ドライバが対応する CUDA を確認
+#   3. https://pytorch.org/get-started/locally/ のセレクタで cuXXX を確認し下行を差し替え
+#      （その cuXXX に cp312/win_amd64 のホイールが実在するかも合わせて確認する）
+#   4. .venv\Scripts\python.exe -m pip install -r requirements-cuda.txt
+#   5. .venv\Scripts\python.exe -c "import torch;print(torch.__version__, torch.cuda.is_available())"
+#      → バージョンに +cpu が付かず True になれば成功
+#
+# 【確認済み: 2026-09-10、デスクトップ機】
+#   GPU        : GeForce RTX 3060 Ti (sm_86)
+#   ドライバ    : 591.86 / 対応 CUDA 13.1（nvidia-smi）
+#   選んだ index: cu130（torch 2.14.0 の cp312/win ホイールは cu126 と cu130 のみ存在し、
+#                 ドライバが CUDA 13.1 なので新しい cu130 を採る。sm_86 は CUDA 13 系の
+#                 サポート対象内）
+# torchvision も同じ index の cu130 ビルドで揃える（片方だけ CPU 版だと import で落ちる）。
+--index-url https://download.pytorch.org/whl/cu130
+torch==2.14.0+cu130
+torchvision==0.29.0+cu130
