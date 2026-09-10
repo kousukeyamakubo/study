@@ -184,7 +184,39 @@ YOLO が安定するのは概ね 20 px 以上。**40 m の自転車が 24 px 幅
 cd camera_pipeline
 python run_pipeline.py                                    # 引数無し→ダイアログでvideo・markers.csvを選ぶ
 python run_pipeline.py video.mp4 markers.csv --out video.ground.csv
+python run_pipeline.py atlas_log_20260820_155929.cam.gz markers.csv   # .camは内部で連番JPEGに展開
+python run_pipeline.py video.mp4 markers.csv --overlay                # 確認用動画も出す
+python run_pipeline.py atlas_log.cam --new-markers                    # markersを必ず作り直す
+python run_pipeline.py video.mp4 markers.csv --no-plot                # 俯瞰図を出さない
+python run_pipeline.py atlas_log.cam --plot-frames                    # フレーム毎の俯瞰図も
 ```
+
+ラベルの俯瞰図 `data/outputs/<映像名>.ground.png` は**既定で出す**（`--no-plot`で抑止）。
+マーカーとその凸包（この外は外挿）・track毎の軌跡をXY平面に描く。CSVの数字だけでは
+変換の破綻に気付けないため（下記のマーカー一直線の件）、出す側を既定にしている。
+
+`--plot-frames` を付けると**フレーム1枚ごとの俯瞰図**も出す:
+`data/outputs/<映像名>_ground_frames/00000.png` …（連番＝フレーム番号）と、それを繋いだ
+`<映像名>.ground.mp4`。軸は全フレームで固定し、過去の軌跡を薄く残して現在位置を大きく描く
+（フレーム毎に自動スケールすると、動いていないのに動いて見える）。検出が無いフレームも
+履歴だけ描いて出すので、枚数は入力フレーム数と一致する。4K・50フレームで約4秒。
+
+`markers.csv` を省略すると「既存のどれを使うか／新規作成」を選べる（2026-09-10追加）。
+新規作成を選ぶと代表フレーム（既定は中央。`--marker-frame` で変更）に対して
+`calib/pick_markers.py --xy --auto` が起動し、指し終わるとそのまま検出まで続く。
+**カメラ設置は撮影ごとに変わるのでHも markers も撮影ごとに別物**になる。保存名は
+`<映像名>.markers.csv` に固定してあり、別セッションのものを選ぶと警告が出る
+（同じ設置のまま連続で撮った2本目は使い回せるので、禁止ではなく警告）。
+
+`--overlay` で bbox・接地点・track_id を重ねた `data/outputs/<video名>_overlay.mp4` も出す
+（2026-09-10追加。`detect/overlay_detections.py` の `render()` を呼ぶだけ。4Kが重いときは
+`--overlay-scale 0.5`）。ラベルCSVの数字だけでは接地点のずれと 5fps での track_id 切れが
+見えないので、ラベルを渡す前の目視確認はこれで行う。
+
+`.cam`（`.cam.gz`）を直接渡せる（2026-09-10追加）。内部で `capture/cam_extract.py` を呼んで
+`<cam名>_frames/` に連番JPEGを展開し、`--dt 0.2` を自動で立てて検出に回す。同じstemの`.dat`が
+隣にあれば枚数照合も併せて行う（無ければ照合せず警告。別セッションの`.dat`との取り違えを
+避けるため名前からの推測はしない。`--dat`で明示指定できる）。
 
 `markers.csv` は `calib/pick_markers.py`（`--xy --auto` 推奨）の出力。個別のステップを
 Pythonから直接使う場合（デバッグ・別処理への組み込み等）:

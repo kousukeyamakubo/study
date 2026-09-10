@@ -70,6 +70,21 @@ def apply_h(H: np.ndarray, pts: np.ndarray) -> np.ndarray:
     return p[:, :2] / p[:, 2:3]
 
 
+def spread_axes(pts: np.ndarray) -> tuple[float, float]:
+    """点群の主軸方向・副軸方向の広がり（RMS）[m]を返す（大きい順）。
+
+    【なぜ要るか】マーカーが一直線に並んでいると DLT は退化する。しかも
+    **再投影残差では検出できない**: 一直線上の点はどんな線形写像でも完全に再現できるため、
+    残差はほぼ 0 になって「精度良好」に見える。実際に出るのは第2行が 0 の H で、
+    どの画素を入れても Y が 0 になるラベルができる（2026-09-10 に実データで発生）。
+    副軸方向の広がりを見ればこの退化を事前に検出できる"""
+    c = np.asarray(pts, float)
+    c = c - c.mean(axis=0)
+    sv = np.linalg.svd(c, compute_uv=False)
+    n = max(len(c), 1)
+    return float(sv[0] / np.sqrt(n)), float(sv[1] / np.sqrt(n))
+
+
 def reprojection_error(H: np.ndarray, src: np.ndarray, dst: np.ndarray) -> np.ndarray:
     """各対応点の残差[dst の単位]。マーカーの測り間違いはここに大きく出るので、
     残差を見て異常な点を弾くのが実運用での使い方"""

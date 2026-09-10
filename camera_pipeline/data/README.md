@@ -6,6 +6,10 @@ git管理外の生データ（`.mp4`等）はルートの`.gitignore`（拡張�
 ```
 data/
   （動画・markers.csv など、入力データを直接ここに置く）
+  <映像名>.markers.csv   run_pipeline.py が新規作成するマーカー。カメラ設置は撮影ごとに
+              変わるので撮影セッション単位で1本持つ（共通の1本を使い回さない）
+  *_frames/   .cam を展開した連番JPEG（run_pipeline.py に .cam を渡すと自動生成）。
+              .cam から再生成できるためgit追跡外
   outputs/    run_pipeline.py が生成する地上座標ラベルCSVの置き場。
               入力データと混ざらないよう分離。動画名基準のファイル名なので、
               同じ動画を再実行すると上書き更新される

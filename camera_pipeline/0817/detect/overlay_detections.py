@@ -15,6 +15,9 @@
 # 使い方:
 #   python overlay_detections.py frames/ detections.csv --out overlay.mp4
 #   python overlay_detections.py video.mp4 detections.csv --scale 0.5
+#
+# `../../run_pipeline.py --overlay` はこの render()/summarize() を呼ぶ。
+# 検出CSVを経由せず、merge_cyclist() 済みの DataFrame をそのまま渡す形。
 
 import argparse
 from pathlib import Path
@@ -74,6 +77,47 @@ def draw(im, rows: pd.DataFrame, thick: int, fscale: float):
     return im
 
 
+def render(src: Path, df: pd.DataFrame, out: Path, dt: float = FRAME_PERIOD_S,
+           scale: float = 1.0) -> int:
+    """merge_cyclist() 済みの df を src の各フレームに重ねて out に書き、フレーム数を返す。
+
+    df を引数に取るのは、検出CSVを経由せずに呼べるようにするため
+    （run_pipeline.py は検出結果をメモリ上で持っているので、書き出して読み直す必要がない）"""
+    by_frame = dict(tuple(df.groupby("frame")))
+    vw, n = None, 0
+    for i, im in iter_frames(src):
+        if scale != 1.0:
+            im = cv2.resize(im, None, fx=scale, fy=scale)
+        rows = by_frame.get(i)
+        if rows is not None:
+            r = rows.copy()
+            for c in ["x1", "y1", "x2", "y2", "foot_u", "foot_v"]:
+                r[c] *= scale                    # CSV は元解像度の座標なので合わせる
+            # 線の太さと文字は解像度に比例させる（4K で 1px の枠は見えない）
+            t = max(1, int(round(im.shape[1] / 960)))
+            draw(im, r, thick=t, fscale=0.6 * t)
+        if vw is None:
+            h, w = im.shape[:2]
+            vw = cv2.VideoWriter(str(out), cv2.VideoWriter_fourcc(*"mp4v"),
+                                 1.0 / dt, (w, h))
+        vw.write(im)
+        n += 1
+    vw.release()
+    return n
+
+
+def summarize(df: pd.DataFrame, n_frame: int) -> None:
+    """検出の粗い健全性を報告する。track_id が細切れなら 5 fps で追従できていない
+    （レーダーとの軌跡照合に効くので、動画を見る前に数字で気付けるようにしている）"""
+    print(f"  検出 {len(df)} 件 / 追跡 ID {df['track_id'].nunique()} 個 "
+          f"/ 検出のあったフレーム {df['frame'].nunique()}/{n_frame}")
+    span = df.groupby("track_id")["frame"].agg(["min", "max", "count"])
+    short = span[span["count"] < 3]
+    if len(short):
+        print(f"  ★ 3 フレーム未満の track_id が {len(short)} 個。"
+              f"5 fps で追従できていない可能性（bytetrack.yaml の緩和を検討）")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("src", type=Path, help="連番画像ディレクトリ または 動画")
@@ -85,38 +129,11 @@ def main():
     args = ap.parse_args()
 
     df = merge_cyclist(pd.read_csv(args.csv))     # 生の person/bicycle ではなく統合後の3クラスを描く
-    by_frame = dict(tuple(df.groupby("frame")))
     out = args.out or args.src.with_suffix("").with_name(args.src.stem + "_overlay.mp4")
 
-    vw, n = None, 0
-    for i, im in iter_frames(args.src):
-        if args.scale != 1.0:
-            im = cv2.resize(im, None, fx=args.scale, fy=args.scale)
-        rows = by_frame.get(i)
-        if rows is not None:
-            r = rows.copy()
-            for c in ["x1", "y1", "x2", "y2", "foot_u", "foot_v"]:
-                r[c] *= args.scale               # CSV は元解像度の座標なので合わせる
-            # 線の太さと文字は解像度に比例させる（4K で 1px の枠は見えない）
-            t = max(1, int(round(im.shape[1] / 960)))
-            draw(im, r, thick=t, fscale=0.6 * t)
-        if vw is None:
-            h, w = im.shape[:2]
-            vw = cv2.VideoWriter(str(out), cv2.VideoWriter_fourcc(*"mp4v"),
-                                 1.0 / args.dt, (w, h))
-        vw.write(im)
-        n += 1
-    vw.release()
-
+    n = render(args.src, df, out, dt=args.dt, scale=args.scale)
     print(f"{out}: {n} フレーム, {1/args.dt:.1f} fps, {n*args.dt:.1f} 秒")
-    print(f"  検出 {len(df)} 件 / 追跡 ID {df['track_id'].nunique()} 個 "
-          f"/ 検出のあったフレーム {df['frame'].nunique()}/{n}")
-    # track_id が細切れなら 5 fps で追従できていない。レーダーとの軌跡照合に効く
-    span = df.groupby("track_id")["frame"].agg(["min", "max", "count"])
-    short = span[span["count"] < 3]
-    if len(short):
-        print(f"  ★ 3 フレーム未満の track_id が {len(short)} 個。"
-              f"5 fps で追従できていない可能性（bytetrack.yaml の緩和を検討）")
+    summarize(df, n)
 
 
 if __name__ == "__main__":

@@ -55,7 +55,8 @@ from pathlib import Path
 # パッケージ化せずパスを通す方式にしている
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "lib"))
 
-from homography import apply_h, estimate_homography, reprojection_error, trilaterate
+from homography import (apply_h, estimate_homography, reprojection_error, spread_axes,
+                        trilaterate)
 
 TILE_M = 0.20          # タイル1辺[m]（明るい正方形。4タイル一括の実測から）
 ZOOM = 8               # 拡大窓の倍率
@@ -158,13 +159,33 @@ def refine(im, u0: int, v0: int, auto: bool = False) -> tuple[int, int] | None:
             return None
 
 
-def evaluate(rows: list[dict]) -> None:
-    """再投影残差を出す。マーカーの数え間違いと歩道の非平面性の両方がここに出る"""
+def point_name(n: int, xy: bool) -> str:
+    """点の呼び名。--xy では1・2点目をアンカーA・Bと呼ぶので、画面の見出しも端末の
+    メッセージも同じ名前にする（画面が数字・端末がA/Bだと対応が分からなくなる）"""
+    if xy:
+        return "A" if n == 0 else "B" if n == 1 else f"#{n}"
+    return f"#{n}"
+
+
+def evaluate(rows: list[dict], names: list[str] | None = None) -> None:
+    """再投影残差を出す。マーカーの数え間違いと歩道の非平面性の両方がここに出る。
+
+    names は各点の呼び名（--xy のとき A/B/#n）。省略時は格子番号 (i,j) を出す"""
     if len(rows) < 4:
         print(f"  点が {len(rows)} 個。ホモグラフィには 4 点以上必要")
         return
     uv = np.array([[r["u"], r["v"]] for r in rows], float)
     xy = np.array([[r["X"], r["Y"]] for r in rows], float)
+
+    # 配置の退化を残差より先に見る。一直線に並べた点は完全に再現できてしまうので、
+    # 残差は 0 に近づいて「精度良好」に見えるのに、H は Y を捨てた写像になる
+    # （2026-09-10 に実データで発生）。現地で指している最中に気付けるよう、ここで出す
+    major, minor = spread_axes(xy)
+    if minor < 0.10:
+        print(f"\n★ マーカーが一直線に並んでいる（主軸 {major:.2f} m / 副軸 {minor:.3f} m）。"
+              "このままだとHが退化し、Yが常に0のラベルになる。"
+              "以降の残差は当てにならない。横方向にもばらして点を足すこと")
+
     H = estimate_homography(uv, xy)
     e = reprojection_error(H, uv, xy)
 
@@ -172,8 +193,10 @@ def evaluate(rows: list[dict]) -> None:
     outlier = (e > 3 * np.median(e)) & (e > 0.05)
 
     print(f"\n再投影残差[m]  平均 {e.mean():.3f} / 最大 {e.max():.3f}")
-    for r, err, o in zip(rows, e, outlier):
-        print(f"  ({r['i']:>3},{r['j']:>3})  ({r['X']:6.2f},{r['Y']:6.2f}) m  "
+    for n, (r, err, o) in enumerate(zip(rows, e, outlier)):
+        # --xy では i は点の通し番号でしかないので、格子番号として出すと紛らわしい
+        head = f"{names[n]:>4}" if names else f"({r['i']:>3},{r['j']:>3})"
+        print(f"  {head}  ({r['X']:6.2f},{r['Y']:6.2f}) m  "
               f"残差 {err:.3f} m{'  ★' if o else ''}")
 
     # 判定: レーダー距離分解能 0.846 m の 1/3 を目標にしている（README §1）
@@ -224,7 +247,7 @@ def main():
             rows = [{k: float(v) if k not in ("i", "j") else int(v)
                      for k, v in r.items()} for r in csv.DictReader(f)]
         print(f"{args.check}: {len(rows)} 点")
-        evaluate(rows)
+        evaluate(rows, [point_name(n, args.xy) for n in range(len(rows))] if args.xy else None)
         return
 
     im = cv2.imread(str(args.image))
@@ -242,7 +265,14 @@ def main():
         print("  3点目以降=アンカーA・Bまでの実測距離を入力（trilaterateが座標を計算）")
     else:
         print("タイルの角を粗くクリック → 拡大窓で確定 → 端末で格子番号を入力")
-    print("  u=直前を取り消し / s=保存 / q=保存して終了")
+    # キーは cv2 のウィンドウにフォーカスがある間しか届かない。--xy/格子モードでは
+    # 実測値を端末に打った直後はフォーカスが端末側にあるので、q が効かず戻れなくなる。
+    # どこで効くかを明示し、端末の入力プロンプトからも終われるようにしてある
+    print("  画像ウィンドウにフォーカスがある状態で: u=直前を取り消し / s=保存 / q=保存して終了")
+    print("    （端末に数値を入力した直後は端末側にフォーカスがある。"
+          "ウィンドウを一度クリックしてから押すこと）")
+    print('  端末の入力プロンプトでも終われる: q だけ=この点をやめて終了 / '
+          '"8 9 q"=この点を足して終了')
 
     pending = {}
     last: dict[str, str] = {}
@@ -253,6 +283,17 @@ def main():
 
     cv2.namedWindow("pick")
     cv2.setMouseCallback("pick", on_mouse)
+
+    def save_rows() -> None:
+        cols = ["u", "v", "label"] if args.annotate else COLS
+        with open(args.out, "w", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, cols)
+            w.writeheader()
+            w.writerows(rows)
+        print(f"\n保存: {args.out} ({len(rows)} 点)")
+        if not args.annotate:
+            names = [point_name(n, True) for n in range(len(rows))] if args.xy else None
+            evaluate(rows, names)
 
     while True:
         disp = view.copy()
@@ -265,8 +306,13 @@ def main():
                 tag = f"({r['X']:.2f},{r['Y']:.2f})"
             else:
                 tag = f"({r['i']},{r['j']})"
-            cv2.putText(disp, f"{n}:{tag}", (p[0] + 8, p[1] - 6),
+            # 見出しは端末のメッセージと同じ呼び名にする（--xy なら A/B/#n）
+            head = point_name(n, True) if args.xy else str(n)
+            cv2.putText(disp, f"{head}:{tag}", (p[0] + 8, p[1] - 6),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 255), 1, cv2.LINE_AA)
+        # 端末側の説明は点を打つほど流れていくので、キー操作は画面にも出しておく
+        cv2.putText(disp, "u=undo  s=save  q=save&quit", (10, 22),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2, cv2.LINE_AA)
         cv2.imshow("pick", disp)
         k = cv2.waitKey(20) & 0xFF
 
@@ -290,11 +336,16 @@ def main():
                     # 3点目以降はA・Bまでの距離2本だけを入力して trilaterate に投げる
                     if len(rows) == 0:
                         rows.append(dict(u=p[0], v=p[1], i=0, j=0, X=0.0, Y=0.0))
-                        print(f"  #0 追加 → アンカーA（原点）")
+                        print("  A 追加 → アンカーA（原点）")
                         continue
                     if len(rows) == 1:
+                        t = input(f"  ({p[0]},{p[1]}) アンカーA-B間の実測距離[m]"
+                                  "（q=やめて終了） > ").strip()
+                        if t.lower() in ("q", "quit"):
+                            save_rows()
+                            break
                         try:
-                            d_ab = float(input(f"  ({p[0]},{p[1]}) アンカーA-B間の実測距離[m] > "))
+                            d_ab = float(t)
                         except ValueError:
                             print("  → 入力が不正。この点は破棄")
                             continue
@@ -302,12 +353,21 @@ def main():
                             print(f"  ⚠ アンカー間隔 {d_ab:.1f} m は狭い。"
                                   "遠方の点でメジャー誤差が大きく増幅される（10m以上を推奨）")
                         rows.append(dict(u=p[0], v=p[1], i=1, j=0, X=d_ab, Y=0.0))
-                        print(f"  #1 追加 → アンカーB ({d_ab:.2f}, 0.00) m")
+                        print(f"  B 追加 → アンカーB ({d_ab:.2f}, 0.00) m")
                         continue
                     baseline = rows[1]["X"]
+                    raw = input(f"  ({p[0]},{p[1]}) アンカーAまで, Bまでの実測距離[m]"
+                                '（q / "8 9 q"=足して終了） > ').strip()
+                    if raw.lower() in ("q", "quit"):
+                        save_rows()
+                        break
+                    t = raw.replace(",", " ").split()
+                    # 末尾の q は「この点を足して終了」。最後のマーカーを指した直後は
+                    # 端末側にフォーカスがあるので、今打っている行で終われるようにする
+                    quit_after = bool(t) and t[-1].lower() in ("q", "quit")
+                    if quit_after:
+                        t = t[:-1]
                     try:
-                        t = input(f"  ({p[0]},{p[1]}) アンカーAまで, Bまでの実測距離[m] > "
-                                 ).replace(",", " ").split()
                         r_a, r_b = float(t[0]), float(t[1])
                     except (ValueError, IndexError):
                         print("  → 入力が不正。この点は破棄")
@@ -319,10 +379,28 @@ def main():
                     X, Y = got
                     rows.append(dict(u=p[0], v=p[1], i=len(rows), j=0, X=X, Y=Y))
                     print(f"  #{len(rows)-1} 追加 ({X:.2f}, {Y:.2f}) m")
+                    # Y≈0 は「この点がA-Bの直線上にある」ことを意味する（三角形が潰れていて
+                    # trilaterate は Y=0 しか返せない）。メジャーを一直線に張ってコーンを
+                    # 置くとこうなるが、全点がそうだとHが退化する。入力した直後に言う
+                    if abs(Y) < 0.10:
+                        print("    ⚠ アンカーA-Bの直線上（Y≈0）の点。"
+                              "「Aまで = Bまで ± A-B間」が成立している。"
+                              "線から外れた位置のマーカーも指さないとHが退化する")
+                    if quit_after:
+                        save_rows()
+                        break
                     continue
                 # 格子番号は整数。原点は最初に指した点にするのが分かりやすい
+                raw = input(f"  ({p[0]},{p[1]}) の格子番号 i,j"
+                            '（q / "3 2 q"=足して終了） > ').strip()
+                if raw.lower() in ("q", "quit"):
+                    save_rows()
+                    break
+                t = raw.replace(",", " ").split()
+                quit_after = bool(t) and t[-1].lower() in ("q", "quit")
+                if quit_after:
+                    t = t[:-1]
                 try:
-                    t = input(f"  ({p[0]},{p[1]}) の格子番号 i,j > ").replace(",", " ").split()
                     i, j = int(t[0]), int(t[1])
                 except (ValueError, IndexError):
                     print("  → 入力が不正。この点は破棄")
@@ -331,19 +409,15 @@ def main():
                                  X=i * args.pitch, Y=j * args.pitch))
                 print(f"  #{len(rows)-1} 追加 ({i},{j}) = "
                       f"({i*args.pitch:.2f}, {j*args.pitch:.2f}) m")
+                if quit_after:
+                    save_rows()
+                    break
 
         if k == ord("u") and rows:
-            print(f"  #{len(rows)-1} を取り消し")
+            print(f"  {point_name(len(rows) - 1, args.xy)} を取り消し")
             rows.pop()
         if k in (ord("s"), ord("q")):
-            cols = ["u", "v", "label"] if args.annotate else COLS
-            with open(args.out, "w", newline="", encoding="utf-8") as f:
-                w = csv.DictWriter(f, cols)
-                w.writeheader()
-                w.writerows(rows)
-            print(f"\n保存: {args.out} ({len(rows)} 点)")
-            if not args.annotate:
-                evaluate(rows)
+            save_rows()
             if k == ord("q"):
                 break
 

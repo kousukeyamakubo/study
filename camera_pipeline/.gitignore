@@ -13,3 +13,9 @@ __pycache__/
 *.mp4
 *.dat
 *.gif
+*.cam
+*.cam.gz
+# .cam の展開フレーム（1録画で36MB。.camから再生成できるため追跡しない）
+*_frames/
+# run_pipeline.py が出す俯瞰図（再生成できる。docs用の図は追跡したいので outputs/ 限定）
+data/outputs/*.png

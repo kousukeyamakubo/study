@@ -14,15 +14,15 @@
 
 | ファイル | 役割 |
 |---|---|
-| `run_pipeline.py`（直下） | **映像+markers.csv → 地上座標ラベルCSVを1コマンドで完結**（内部で0817/detect・0817/lib一式を呼ぶだけ）。引数無しならファイル選択ダイアログ |
+| `run_pipeline.py`（直下） | **映像+markers.csv → 地上座標ラベルCSVを1コマンドで完結**（内部で0817/detect・0817/lib一式を呼ぶだけ）。`.cam`/`.cam.gz`を渡すと連番JPEG展開（+`.dat`枚数照合）も内部で行う。`--overlay`で確認用動画も。markers.csvは省略すると既存の再利用／新規作成（pick_markers起動）を選べる。地上座標の俯瞰図PNGも既定で出す（`--no-plot`で抑止、`--plot-frames`でフレーム毎） |
 | `data/`（直下） | 映像・markers.csv・出力CSVの置き場。日付フォルダはコードのひとまとめ単位でありデータの置き場ではないため分離（8/16の過去データのみ`0817/data/`に残存） |
 | `0817/detect/detect_yolo.py` | 映像 → 検出結果CSV（YOLO+ByteTrack、ultralytics依存） |
-| `0817/detect/overlay_detections.py` | 検出結果を映像に重ねて可視化 |
+| `0817/detect/overlay_detections.py` | 検出結果を映像に重ねて可視化（`render()`は`run_pipeline.py --overlay`からも呼ぶ） |
 | `0817/lib/detections.py` | `merge_cyclist`（cyclist/pedestrian/vehicle統合）・接地点・地上座標化 |
-| `0817/lib/homography.py` | (u,v)→(X,Y)変換（DLT）・`trilaterate`（アンカー距離2本→座標）・K既知時のh/俯角分解 |
+| `0817/lib/homography.py` | (u,v)→(X,Y)変換（DLT）・`trilaterate`（アンカー距離2本→座標）・`spread_axes`（マーカー配置の退化検出）・K既知時のh/俯角分解 |
 | `0817/calib/chessboard_calib.py` | カメラ内部パラメータ K の較正 |
 | `0817/calib/pick_markers.py` | マーカー地物の画像座標ピッキング（`--xy --auto`でカラーコーン運用） |
-| `0817/calib/ground_plot.py` | 地上座標の可視化 |
+| `0817/calib/ground_plot.py` | 地上座標の可視化。`plot_tracks()`はラベルの俯瞰図・`plot_tracks_per_frame()`はフレーム毎（`run_pipeline.py`が呼ぶ）、`main()`は地物でHを答え合わせする検証用 |
 | `0817/validate/check_homography.py` | ホモグラフィ精度の合成データ検証 |
 | `0817/validate/check_detections.py` | 接地点誤差の定量化 |
 | `0817/validate/eval_ground_truth.py` | 現地実測の真値との突き合わせ（RMSE・bias・距離帯別） |
@@ -42,6 +42,7 @@
 | `docs/detection.md` | YOLO/ByteTrack・merge_cyclistの実装知見と既知問題 | 検出・トラッキングを触るとき |
 | `docs/dataset.md` | 出力CSVの形式・受け渡し契約 | ラベル生成・出力形式を扱うとき |
 | `docs/history.md` | カメラ側の決定と経緯（合同ミーティングからの抜粋） | 「なぜこうなっているか」を知りたいとき |
+| `docs/fieldwork.md` | 現地作業の計画・手順（回ごとに追記。実施後の結果も） | 現地に行く前後 |
 
 ## ドキュメント鮮度チェック
 

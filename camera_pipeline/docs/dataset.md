@@ -20,6 +20,16 @@
 上記と同じカラム構成。`cls`が研究対象クラス文字列（`cyclist` / `vehicle` / `pedestrian`）に
 置き換わり、cyclistの`foot_u, foot_v`は統合後の接地点（bicycleの下辺）になる。
 
+## `run_pipeline.py` が出すファイル（`data/outputs/`）
+
+| ファイル | 内容 |
+|---|---|
+| `<映像名>.ground.csv` | 地上座標ラベル（下記）＝**受け渡しの正本** |
+| `<映像名>.ground.png` | 俯瞰図。既定で出る（`--no-plot`で抑止）。目視確認用で契約外 |
+| `<映像名>_ground_frames/NNNNN.png` | フレーム毎の俯瞰図（`--plot-frames`時のみ）。連番＝フレーム番号。契約外 |
+| `<映像名>.ground.mp4` | 上をつないだ動画（`--plot-frames`時のみ）。契約外 |
+| `<映像名>_overlay.mp4` | bbox・接地点・track_idを重ねた動画（`--overlay`時のみ）。契約外 |
+
 ## 地上座標ラベル（`to_ground()`適用後）＝ ラベルの正本
 
 統合済み検出に以下が追加される:
