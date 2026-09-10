@@ -36,7 +36,7 @@ GRID_RES_M = 0.5
 GRID_X = int((GRID_X_RANGE_M[1] - GRID_X_RANGE_M[0]) / GRID_RES_M)   # 80
 GRID_Y = int((GRID_Y_RANGE_M[1] - GRID_Y_RANGE_M[0]) / GRID_RES_M)   # 100
 
-# 本研究の対象クラス。0817/lib/detections.py の CLS_* と合わせる
+# 本研究の対象クラス。../camera_pipeline/0817/lib/detections.py の CLS_* と合わせる
 N_CLASSES = 3  # 背景 / cyclist / pedestrian
 
 

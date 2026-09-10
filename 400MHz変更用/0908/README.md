@@ -52,18 +52,22 @@
   0908/raw_phase_model/ … 「生位相を渡す」案の形だけのプロトタイプ（学習未実施）
 ```
 
+> 図中のカメラ側（`cam_sync/` `0817/capture/` `detect_yolo.py` `yolo_tracking_notes.md`
+>  `detections.py` `0817/calib/`）は 2026-09-10 に `../camera_pipeline/` へ移動した。
+> 列の対応が読めるよう、図の表記は移動前のまま残してある。
+
 ## 3. ファイル・フォルダ一覧
 
 | フォルダ | 役割 | 状態 | 依存 |
 |---|---|---|---|
 | `0908/dat_settings/` | `.dat`ヘッダ0x64〜0xB3の意味を設定差分で特定（H8） | **完了**（Remove Static Clutter=`0x72`確定） | なし |
-| `0908/cam_sync/` | カメラ・レーダーの枚数一致検証（S1） | **完了**（10秒×2本で一致。長時間は対象外と判断） | `0817/capture/cam_extract.py` |
-| `0908/matching/` | カメラ検出とレーダーピークの対応付け（S3） | 骨格実装のみ。**実測データでの較正は未** | 0817の地上座標、レーダーピーク |
+| `../camera_pipeline/0908/cam_sync/` | カメラ・レーダーの枚数一致検証（S1） | **完了**（10秒×2本で一致。長時間は対象外と判断） | `../camera_pipeline/0817/capture/cam_extract.py` |
+| `0908/matching/` | カメラ検出とレーダーピークの対応付け（S3） | 骨格実装のみ。**実測データでの較正は未** | `../camera_pipeline/0817/` の地上座標、レーダーピーク |
 | `0908/postprocess/` | ピーク抽出→NMS→追尾（S5、モデル非依存） | 実装完了。**合成データのみ検証、実測適用は未** | なし（独立） |
 | `0908/raw_phase_model/` | 生位相入力案のプロトタイプ | 形状確認のみ。**学習未実施** | S4（教師テンソル） |
-| `0908/yolo_tracking_notes.md` | 実データでのYOLO/ByteTrack知見 | bicycle/motorcycle dedup対応済み／track_id=-1は保留継続 | `0817/detect_yolo.py` |
+| `../camera_pipeline/0908/yolo_tracking_notes.md` | 実データでのYOLO/ByteTrack知見 | bicycle/motorcycle dedup対応済み／track_id=-1は保留継続 | `../camera_pipeline/0817/detect_yolo.py` |
 | `0908/comparison/` | before/after比較動画の置き場 | 空（運用フォルダ、内容はgitignore） | — |
-| `0817/calib/` | チェスボード較正・h/俯角試算（H3/S2） | K較正完了。**h・俯角試算値の信頼性は未検証** | 8/16マーカーデータ |
+| `../camera_pipeline/0817/calib/` | チェスボード較正・h/俯角試算（H3/S2） | K較正完了。**h・俯角試算値の信頼性は未検証** | 8/16マーカーデータ |
 
 ## 4. 確定していること
 

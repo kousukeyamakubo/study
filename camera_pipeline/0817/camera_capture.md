@@ -1,6 +1,6 @@
 # AtlasDemoKitApp のカメラ機能で得られるもの（2026-08-16）
 
-`0725/camera_radar_labeling_plan.md` Step 1「カメラ映像の取得」に対する回答。
+`../400MHz変更用/0725/camera_radar_labeling_plan.md` Step 1「カメラ映像の取得」に対する回答。
 撮影に使うのは**外付けの USB カメラ**だが、アプリの Camera タブから選択して駆動できる。
 **この経路だけでラベル生成用の映像が揃うか**を、実ファイルを解析して確認した。
 

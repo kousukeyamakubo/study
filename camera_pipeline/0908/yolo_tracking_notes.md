@@ -1,7 +1,7 @@
 # YOLO/ByteTrack の実データでの気づき（2026-08-19）
 
 `0817/detect/detect_yolo.py` + `merge_cyclist()` を実測映像（`0817/data/atlas_log_20260816_172841.mp4`）
-にかけて`0908/comparison/`でbefore/after比較をした際に見つかったもの。対応済みと未対応が混在する。
+にかけて`../../400MHz変更用/0908/comparison/`でbefore/after比較をした際に見つかったもの。対応済みと未対応が混在する。
 
 ## 1. bicycle/motorcycle の二重検出（対応済み）
 
@@ -37,6 +37,6 @@ S3 レーダー対応付け）は、`-1` を挟むと「別トラック」とし
 
 ### 対応方針（未着手）
 
-`detect_yolo.py` 自体を直すのではなく、後処理側（`merge_cyclist` か、`0908/postprocess/track.py`
+`detect_yolo.py` 自体を直すのではなく、後処理側（`merge_cyclist` か、`../../400MHz変更用/0908/postprocess/track.py`
 のような追跡ロジック）で `-1` を「不明」として扱い、前後の track_id と位置が近ければ
 同一トラックとして繋ぎ直す、という形が良さそう。優先度は週末の撮影・データ収集より低い。
