@@ -176,6 +176,19 @@ YOLO が安定するのは概ね 20 px 以上。**40 m の自転車が 24 px 幅
 
 ## 5. 使い方
 
+映像1本を地上座標ラベルCSVまで一気に出すなら `../run_pipeline.py`（camera_pipeline直下。
+2026-09-10追加。検出・統合・座標変換の呼び出し順をまとめただけで、各モジュールの実装は
+変えていない）:
+
+```
+cd camera_pipeline
+python run_pipeline.py                                    # 引数無し→ダイアログでvideo・markers.csvを選ぶ
+python run_pipeline.py video.mp4 markers.csv --out video.ground.csv
+```
+
+`markers.csv` は `calib/pick_markers.py`（`--xy --auto` 推奨）の出力。個別のステップを
+Pythonから直接使う場合（デバッグ・別処理への組み込み等）:
+
 ```python
 from detections import merge_cyclist, to_ground, add_slant_range, load
 from homography import estimate_homography

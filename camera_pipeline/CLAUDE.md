@@ -14,15 +14,18 @@
 
 | ファイル | 役割 |
 |---|---|
+| `run_pipeline.py`（直下） | **映像+markers.csv → 地上座標ラベルCSVを1コマンドで完結**（内部で0817/detect・0817/lib一式を呼ぶだけ）。引数無しならファイル選択ダイアログ |
+| `data/`（直下） | 映像・markers.csv・出力CSVの置き場。日付フォルダはコードのひとまとめ単位でありデータの置き場ではないため分離（8/16の過去データのみ`0817/data/`に残存） |
 | `0817/detect/detect_yolo.py` | 映像 → 検出結果CSV（YOLO+ByteTrack、ultralytics依存） |
 | `0817/detect/overlay_detections.py` | 検出結果を映像に重ねて可視化 |
 | `0817/lib/detections.py` | `merge_cyclist`（cyclist/pedestrian/vehicle統合）・接地点・地上座標化 |
-| `0817/lib/homography.py` | (u,v)→(X,Y)変換（DLT）・K既知時のh/俯角分解 |
+| `0817/lib/homography.py` | (u,v)→(X,Y)変換（DLT）・`trilaterate`（アンカー距離2本→座標）・K既知時のh/俯角分解 |
 | `0817/calib/chessboard_calib.py` | カメラ内部パラメータ K の較正 |
-| `0817/calib/pick_markers.py` | マーカー地物の画像座標ピッキング |
+| `0817/calib/pick_markers.py` | マーカー地物の画像座標ピッキング（`--xy --auto`でカラーコーン運用） |
 | `0817/calib/ground_plot.py` | 地上座標の可視化 |
 | `0817/validate/check_homography.py` | ホモグラフィ精度の合成データ検証 |
 | `0817/validate/check_detections.py` | 接地点誤差の定量化 |
+| `0817/validate/eval_ground_truth.py` | 現地実測の真値との突き合わせ（RMSE・bias・距離帯別） |
 | `0817/capture/cam_extract.py` | `.cam`→連番JPEG抽出、`--dat`で`.dat`フレーム数と枚数照合 |
 | `0908/cam_sync/` | カメラ・レーダーの枚数一致検証（S1・完了） |
 | `0908/yolo_tracking_notes.md` | 実データでのYOLO/ByteTrackの既知問題（未整理・生ノート） |
@@ -99,6 +102,19 @@ ls ../400MHz変更用/meeting/
 
 `yolo11m.pt`（38MB）は ultralytics が初回実行時にカレントディレクトリへ自動取得する。
 `.gitignore` の `*.pt` で追跡外。
+
+### 実行環境（本番のYOLO推論はデスクトップ固定）
+
+`detect_yolo.py` によるラベル生成（本番運用）は**常にデスクトップ機（GPU）で実行する**。
+ノートPCでは実行しない。
+
+**理由:**
+- 速度差が大きい（`track`全体で約20倍、`0910/bench/README.md`）。撮影1分（30fps）で
+  CPU約17分 → GPU約1.5分
+- CPU機とGPU機は検出CSVがバイト一致しない（FP32同士でも畳み込み実装が違う）。
+  実行機を固定すれば「どちらで生成したか記録する」運用が不要になる（2026-09-10、`docs/history.md`）
+
+ノートPCは較正・可視化・軽い検証用途に留める。
 
 ## ブランチ戦略
 
