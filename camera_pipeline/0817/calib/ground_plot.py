@@ -104,7 +104,11 @@ def plot_tracks(labeled, xy_m: np.ndarray, out: Path, title: str = "",
         seen.add(cls)
 
     n_track = labeled["track_id"].nunique() if len(labeled) else 0
-    ax.legend(fontsize=8)
+    # 凡例は図の下端（余白）に置く。aspect="equal" で X が数十m・Y が数m だと
+    # 描画域が横長の帯になり、軸内に置くとマーカーや軌跡に必ず重なる。
+    # 軸基準（bbox_to_anchor）だと帯の高さに追従して xlabel と衝突するので図基準にする
+    fig.legend(*ax.get_legend_handles_labels(), loc="lower center",
+               ncol=4, fontsize=8, frameon=False)
     if len(labeled):
         ax.set_title(f"{title}   {len(labeled)} pts / {n_track} tracks   (o = track start)")
     else:
@@ -129,6 +133,10 @@ def _static_ax(ax, xy_m: np.ndarray, radar_xy=None) -> None:
     ax.set_ylabel("Y [m]")
     ax.set_aspect("equal")
     ax.grid(alpha=0.3)
+    # Y を下向きにする。地上座標系の +Y は「AB線から歩道の内側へ」の向きで、
+    # 映像では手前側に見える。数学の流儀（上向き）のままだと映像と上下が逆になり、
+    # 俯瞰図と映像を見比べるときに読み替えが要る
+    ax.invert_yaxis()
 
 
 def plot_tracks_per_frame(labeled, xy_m: np.ndarray, out_dir: Path, n_frame: int,
@@ -160,8 +168,9 @@ def plot_tracks_per_frame(labeled, xy_m: np.ndarray, out_dir: Path, n_frame: int
     fig, ax = plt.subplots(figsize=(9, 7))
     _static_ax(ax, xy_m, radar_xy)
     ax.set_xlim(*xlim)
-    ax.set_ylim(*ylim)
-    ax.legend(fontsize=8, loc="upper right")
+    ax.set_ylim(ylim[1], ylim[0])        # _static_ax と同じく Y を下向きに固定する
+    fig.legend(*ax.get_legend_handles_labels(), loc="lower center",
+               ncol=4, fontsize=8, frameon=False)
 
     writer = None
     if mp4 is not None:
@@ -319,7 +328,9 @@ def main():
     ax.set_ylabel("Y [m]")
     ax.set_aspect("equal")
     ax.grid(alpha=0.3)
-    ax.legend(fontsize=8)
+    ax.invert_yaxis()
+    fig.legend(*ax.get_legend_handles_labels(), loc="lower center",
+               ncol=4, fontsize=8, frameon=False)
     ax.set_title(f"bird's-eye view   red x = uncertainty > {TARGET_M} m")
     fig.tight_layout()
     fig.savefig(args.out, dpi=130)
