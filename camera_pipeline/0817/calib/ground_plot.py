@@ -113,10 +113,38 @@ def plot_tracks(labeled, xy_m: np.ndarray, out: Path, title: str = "",
         ax.set_title(f"{title}   {len(labeled)} pts / {n_track} tracks   (o = track start)")
     else:
         ax.set_title(f"{title}   no detections")
+    _fine_y_ticks(ax)       # 軌跡を描いた後の実際の範囲で刻みを決め直す
     fig.tight_layout()
     fig.savefig(out, dpi=130)
     plt.close(fig)
     return out
+
+
+def _fine_y_ticks(ax, max_box_ratio: float = 5.0, target: int = 10) -> None:
+    """Y方向を引き伸ばし、目盛りを細かくする。
+
+    【なぜ縦横比を1:1にしないか】
+    現場は X 数十m に対し歩道幅が約4mしかない。aspect="equal" のままだと描画域が
+    縦横比10:1近い薄い帯になり、目盛りを入れる余地が無くて2.5m刻みのような粗い刻みしか
+    載らない。歩道幅4m・目標精度0.28m のラベルを確認する図としてはそれでは読めないので、
+    縦横比が max_box_ratio を超える分だけ Y を引き伸ばす。
+    引き伸ばした場合は「距離が等倍でない」ことを ylabel に明記する（軌跡の曲がり具合を
+    目測で判断されると誤解のもとになるため）"""
+    lo_x, hi_x = sorted(ax.get_xlim())
+    lo_y, hi_y = sorted(ax.get_ylim())
+    span_x, span_y = hi_x - lo_x, hi_y - lo_y
+    if span_y <= 0 or span_x <= 0:
+        return
+
+    stretch = max(1.0, (span_x / span_y) / max_box_ratio)
+    ax.set_aspect(stretch)
+    ax.set_ylabel("Y [m]" if stretch < 1.05 else f"Y [m]  (x{stretch:.1f} stretched)")
+
+    for step in (0.1, 0.2, 0.25, 0.5, 1.0, 2.0):
+        if span_y / step <= target:
+            break
+    ax.yaxis.set_major_locator(plt.MultipleLocator(step))
+    ax.tick_params(axis="y", labelsize=8)
 
 
 def _static_ax(ax, xy_m: np.ndarray, radar_xy=None) -> None:
@@ -133,6 +161,7 @@ def _static_ax(ax, xy_m: np.ndarray, radar_xy=None) -> None:
     ax.set_ylabel("Y [m]")
     ax.set_aspect("equal")
     ax.grid(alpha=0.3)
+    _fine_y_ticks(ax)
     # Y を下向きにする。地上座標系の +Y は「AB線から歩道の内側へ」の向きで、
     # 映像では手前側に見える。数学の流儀（上向き）のままだと映像と上下が逆になり、
     # 俯瞰図と映像を見比べるときに読み替えが要る
@@ -169,6 +198,7 @@ def plot_tracks_per_frame(labeled, xy_m: np.ndarray, out_dir: Path, n_frame: int
     _static_ax(ax, xy_m, radar_xy)
     ax.set_xlim(*xlim)
     ax.set_ylim(ylim[1], ylim[0])        # _static_ax と同じく Y を下向きに固定する
+    _fine_y_ticks(ax)
     fig.legend(*ax.get_legend_handles_labels(), loc="lower center",
                ncol=4, fontsize=8, frameon=False)
 
@@ -328,6 +358,7 @@ def main():
     ax.set_ylabel("Y [m]")
     ax.set_aspect("equal")
     ax.grid(alpha=0.3)
+    _fine_y_ticks(ax)
     ax.invert_yaxis()
     fig.legend(*ax.get_legend_handles_labels(), loc="lower center",
                ncol=4, fontsize=8, frameon=False)
