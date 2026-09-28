@@ -35,19 +35,27 @@ CASES = {
 }
 
 
-def load_cells(npz_path, rmax):
-    """動体セルの電力[dB]を返す。(Frame, Doppler', Range')"""
+def load_cells(npz_path, rmin, rmax):
+    """動体セルの電力[dB]を返す。(Frame, Doppler', Range')
+
+    rmin より近いビンは捨てる。5F 設置では地上目標はそこまで近づけず、
+    実際に入るのは窓枠・サッシ・三脚といった自分の近傍だけになるため
+    （0727/atlas_track.py の --rmin 13.0 と同じ考え方）。
+    """
     d = np.load(npz_path)
     p = np.abs(d["rd"]).sum(axis=(1, 2))                     # (Frame, Doppler, Range) Rx 非コヒーレント加算
     db = 20 * np.log10(p + 1e-12)
     vel, rng = d["vel_ms"], d["range_m"]
     vel_res = float(np.abs(np.diff(vel)).mean())
     moving = np.abs(vel) >= vel_res                          # 静止クラッタ主ローブを外す
-    return db[:, moving, :][:, :, rng <= rmax]
+    keep_r = (rng >= rmin) & (rng <= rmax)
+    return db[:, moving, :][:, :, keep_r]
 
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--rmin", type=float, default=13.0,
+                    help="近傍ゲート[m]。既定 13m = 5F(h≈15m)から地上目標が現れうる下限")
     ap.add_argument("--rmax", type=float, default=60.0)
     ap.add_argument("--out", default="window_compare.png")
     args = ap.parse_args()
@@ -57,7 +65,7 @@ def main():
     print(f"{'case':26} {'FA@25dB':>9} {'thr for FA=1e-3':>17} {'median':>8}")
 
     for (name, path), c in zip(CASES.items(), ("C0", "C0", "C1", "C1")):
-        flat = load_cells(Path(path), args.rmax).ravel()     # (N,)
+        flat = load_cells(Path(path), args.rmin, args.rmax).ravel()   # (N,)
         fa = (flat[None, :] > thr[:, None]).mean(axis=1)     # (T,)
         ls = "-" if "MTI on" in name else "--"
 
@@ -85,7 +93,8 @@ def main():
 
     ax.set_xlabel("detection threshold [dB]")
     ax.set_ylabel("false-alarm rate  (unmanned background)")
-    ax.set_title("Usable threshold: window open/closed x MTI on/off")
+    ax.set_title(f"Usable threshold: window open/closed x MTI on/off  "
+                 f"(R = {args.rmin:.0f}-{args.rmax:.0f} m)")
     ax.set_ylim(1e-7, 3)
     ax.set_xlim(thr[0], thr[-1])
     ax.grid(alpha=0.3, which="both")
