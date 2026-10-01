@@ -1,54 +1,58 @@
-# 理論曲線とは何かを示す説明用の図。実データは使わない。
+# 理論曲線の形が、走路に対するレーダーの位置でどう変わるかを示す説明用の図。実データは使わない。
 #
-# 走者が走路（直線）を等速で動くとき、レーダーまでの斜距離は
-#   R(t) = sqrt( (s(t) - X0)^2 + d^2 )
-# で決まる。s は走路に沿った位置、X0 は最接近点、d は横方向離隔。
-# 近づく→最接近→遠ざかる、の V 字を底で丸めた形になる。
+#   R(s) = sqrt( (s - X0)^2 + d^2 )     s: 走路に沿った位置[m], X0: 最接近点, d: 横方向離隔
 #
-# 10/2 の図(1) は、この曲線を観測ピーク列に重ねたもの。
-# 図(2) は、ライン違い（d 違い）で曲線がどれだけ離れるかを見るもの。
+# X0 が走路の外（端）にあれば R は単調、走路の中にあれば U 字になる。
+# どちらになるかは現地でレーダーの投影点がどこに来るかで決まるので、走路の取り方で選べる。
+#
+# ライン識別に効くのは R の絶対値ではなく、ライン間の差 ΔR。これは最接近点の近くで最大になり、
+# 離れるほど縮む。したがって走路のどこに最接近点を置くかが設計上の選択になる。
 
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from geometry import slant_range
+from geometry import RANGE_RES_M, slant_range
 
-H, Y_R, V = 15.0, 6.0, 2.5      # 設置高[m] / セットバック[m] / 走行速度[m/s]（いずれも仮）
-X0 = 13.0                        # 最接近点（走路の中央と仮定）
+H, Y_R = 15.0, 6.0              # 設置高[m] / セットバック[m]（いずれも仮。今夜実測）
+L = 26.0                        # 総走行距離[m]
+EVAL = (3.0, 23.0)              # 評価区間[m]
 
-t = np.linspace(0, 26 / V, 400)  # 26 m を走り切るまで
-s = V * t                        # 走路に沿った位置[m]
+CONFIGS = [("A: closest approach at path END  (X0 = 0 m)", 0.0),
+           ("B: closest approach at path CENTER  (X0 = 13 m)", 13.0)]
 
-fig, axes = plt.subplots(1, 2, figsize=(12, 4.5))
+s = np.linspace(0, L, 400)                                   # (S,) 走路に沿った位置
 
-for y, c in ((0.5, "C0"), (3.5, "C1")):
-    r = slant_range(s - X0, y, Y_R, H)                       # (T,)
-    axes[0].plot(t, r, c, lw=2, label=f"line Y={y} m")
-    axes[1].plot(t, np.gradient(r, t), c, lw=2, label=f"line Y={y} m")
+fig, axes = plt.subplots(2, 2, figsize=(13, 8))
+for col, (title, x0) in enumerate(CONFIGS):
+    ax_r, ax_d = axes[0, col], axes[1, col]
+    for y, c in ((0.5, "C0"), (3.5, "C1")):
+        r = slant_range(s - x0, y, Y_R, H)                   # (S,)
+        ax_r.plot(s, r, c, lw=2, label=f"line Y={y} m")
 
-# 観測はこういう形で乗る、という雰囲気（説明用のダミー点）
-rng = np.random.default_rng(0)
-r_obs = slant_range(s - X0, 0.5, Y_R, H)
-pick = np.arange(0, len(t), 18)
-axes[0].plot(t[pick], np.round(r_obs[pick] / 0.846) * 0.846 + rng.normal(0, 0.15, pick.size),
-             "k.", ms=9, label="observed peak (illustrative)")
+    d_r = (slant_range(s - x0, 3.5, Y_R, H)
+           - slant_range(s - x0, 0.5, Y_R, H))               # (S,) ライン間の差
+    ax_d.plot(s, d_r, "C2", lw=2)
+    ax_d.axhline(RANGE_RES_M, color="k", ls="--", lw=1.2)
+    ax_d.text(L, RANGE_RES_M, " range res 0.846 m", fontsize=8.5, ha="right", va="bottom")
 
-axes[0].axvline(X0 / V, color="gray", ls=":", lw=1)
-axes[0].text(X0 / V, slant_range(0, 0.5, Y_R, H), "  closest approach", fontsize=9, color="gray")
-axes[0].set_ylabel("slant range R [m]")
-axes[0].set_title("(1) R(t): theory curve vs observation")
+    for ax in (ax_r, ax_d):
+        ax.axvspan(*EVAL, color="gray", alpha=0.10)
+        ax.axvline(x0, color="darkred", ls=":", lw=1.2)
+        ax.set_xlabel("position along path  s [m]")
+        ax.grid(alpha=0.3)
+        ax.set_xlim(0, L)
+    ax_r.set_title(title)
+    ax_r.set_ylabel("slant range R [m]")
+    ax_r.legend(fontsize=9)
+    ax_d.set_ylabel(r"$\Delta R$ between lines [m]")
+    ax_d.set_ylim(0, 1.6)
 
-axes[1].axhline(0, color="k", lw=1)
-axes[1].set_ylabel("radial velocity $v_r = dR/dt$ [m/s]")
-axes[1].set_title("(2) $v_r(t)$: same information, differentiated")
-
-for ax in axes:
-    ax.set_xlabel("time [s]")
-    ax.grid(alpha=0.3)
-    ax.legend(fontsize=9)
-fig.suptitle(f"Theory curve  (h={H:.0f} m, $y_r$={Y_R:.0f} m, v={V} m/s, closest approach at s={X0:.0f} m)")
+axes[0, 0].text(1.0, slant_range(20, 0.5, Y_R, H), "evaluation section (gray)",
+                fontsize=8.5, color="gray")
+fig.suptitle(f"Theory curve: shape depends on where the closest approach falls  "
+             f"(h={H:.0f} m, $y_r$={Y_R:.0f} m)")
 fig.tight_layout()
 fig.savefig("theory_curve_demo.png", dpi=130)
 print("-> theory_curve_demo.png")
