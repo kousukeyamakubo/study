@@ -86,7 +86,7 @@ def fit_const_speed(r, t):
 
 
 def compare_groups(groups):
-    """ライン別の d̂ を比べる。groups: {ラインY: [d̂, ...]}
+    """ライン別の d_hat を比べる。groups: {ラインY: [d_hat, ...]}
 
     判定の基準は「群間の差が群内のばらつきを超えているか」。
     n=3 なので検定はせず、差とばらつきの比をそのまま示す。
