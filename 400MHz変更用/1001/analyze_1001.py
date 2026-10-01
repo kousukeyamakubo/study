@@ -104,7 +104,7 @@ def main():
 
         ax = fig1.add_subplot(1, len(RUNS), i + 1)
         ax.plot(g["t"], g["rng"], "o-", ms=4)
-        ax.set_title(f"{tag}  {label}\nslope {g['slope']:+.2f} / dop {g['vel']:+.2f}", fontsize=9)
+        ax.set_title(f"{label_en}\nslope {g['slope']:+.2f} / dop {g['vel']:+.2f}", fontsize=9)
         ax.set_xlabel("time [s]")
         ax.grid(alpha=0.3)
         if i == 0:
