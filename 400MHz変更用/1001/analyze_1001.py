@@ -26,11 +26,14 @@ sys.path.insert(0, str(ROOT.parent / "0928"))
 from atlas_ridge_track import build_ridges, moving_power_db   # noqa: E402
 
 # 収録順と走行条件。被験者の申告による
-RUNS = {                          # 収録順と走行条件（被験者の申告）。図の軸は ASCII にする
-    "165506": ("歩行・接近", "walk approach"),
-    "165623": ("歩行・離反", "walk recede"),
-    "165822": ("自転車・接近", "bike approach"),
-    "165922": ("自転車・離反", "bike recede"),
+# ファイル名末尾6桁は収録開始時刻 HHMMSS。16:55:06 から約4分で4本。
+# 徒歩で1往復（遠→近, 近→遠）してから自転車に乗り換え、同じ道をもう1往復した。
+# いずれも道の中央を通行しており、走行ラインを分けた収録ではない。図の軸は ASCII にする
+RUNS = {
+    "165506": ("16:55:06 徒歩・遠→近", "16:55:06 walk, far->near"),
+    "165623": ("16:56:23 徒歩・近→遠", "16:56:23 walk, near->far"),
+    "165822": ("16:58:22 自転車・遠→近", "16:58:22 bike, far->near"),
+    "165922": ("16:59:22 自転車・近→遠", "16:59:22 bike, near->far"),
 }
 RMIN, RMAX = 25.0, 55.0      # 近傍（窓枠・三脚）と遠方を外す
 NOISE_R = 60.0               # ここより遠方を雑音床の参照にする
@@ -114,7 +117,7 @@ def main():
     g = tracks[tag]
     d_grid = np.arange(5.0, g["rng"].min(), 2.5)
     prof = profile_d(g["rng"], g["t"], d_grid)
-    print(f"\n当てはめの d 依存（{tag} {RUNS[tag]}、n={len(g['f'])}、観測の最小 R={g['rng'].min():.1f} m）")
+    print(f"\n当てはめの d 依存（{tag} {RUNS[tag][0]}、n={len(g['f'])}、観測の最小 R={g['rng'].min():.1f} m）")
     print(f"{'d[m]':>6} {'v[m/s]':>8} {'rms[m]':>8}")
     for d, v, rms in prof:
         print(f"{d:6.1f} {v:8.2f} {rms:8.3f}")
