@@ -1,15 +1,14 @@
-# 夜の各走行の距離軌跡を、申告レーンの真値（理論曲線）と重ねて、ずれを定量化する。
+# 夜の各走行で、「走路の真値から決まる R の範囲」と、レーダーの距離−時間を重ねる。1走行1枚。
 #
-# 真値はレーンの位置そのもの。道幅 4 m（実測）を 1 m 間隔の3レーンに分けているので、
-# 右の縁（レーダーに近い側）から 1, 2, 3 m がレーン3, 2, 1。映像がなくても通った場所は分かる。
-# そこから各レーンの最接近距離 d_lane が幾何で決まり、理論軌跡は
-#   R(t)^2 = v^2 (t - t_min)^2 + d_lane^2
-# となる。映像のコーン通過時刻は取れていないので、v と t_min だけはデータへの当てはめで決め、
-# d は申告レーンの値に固定する。残差（観測 R − 理論 R）が「真値からのずれ」。
+# 真値は空間の経路そのもの。コーン4隅で走路の長方形が、その中のレーン（道幅 4 m 実測・1 m 間隔）で
+# 通った線が決まっている。ただし「いつ線上のどこに居たか」は映像なしでは決まらないので、
+# 時刻つきの理論曲線は描かない（v と t_min を当てはめで埋めると、追跡の誤りに引きずられて真値でなくなる）。
 #
-# 注意: 同じ当てはめを隣のレーンの d で行っても残差はほとんど変わらない（README §6 の縮退）。
-# したがってこの図は「真値の曲線に沿っているか・どれだけずれているか」は示せるが、
-# 「申告レーンの曲線が他レーンより良く合うか」はこのデータでは言えない。その差も併せて出す。
+# 時刻を使わずに真値から言えるのは、その経路を通ったなら観測される R の範囲:
+#   手前の端 = 最接近距離 d（垂線の足は走路の中、C1 から奥へ S0）
+#   奥の端   = C5/C6 の並び（垂線の足から L_C1_C5 - S0）
+# この範囲のうち、どこまで目標の筋が見えているかを背景の強度で確かめる。
+# レーン間の d の差は 0.6 m 程度で図の上では区別できないので、レーンごとの線は描かない。
 #
 # 使い方:
 #   python plot_lane_truth.py
@@ -19,99 +18,98 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from analyze_night import CONES, N_MAIN, ROOT, S0, TAGS, condition, lane_delta_d, pick_ridge
+from analyze_night import (CONES, L_C1_C5, N_MAIN, ROOT, S0, TAGS, condition, lane_delta_d,
+                           npz_path, pick_ridge)
+from atlas_ridge_track import moving_power_db
 
-LANE_OFFSET = {3: 1.0, 2: 2.0, 1: 3.0}     # 右の縁からの水平距離 [m]（1 m 間隔、道幅 4 m）
-
-
-def lane_d():
-    """各レーンの最接近距離 d [m]。a（レーダー直下→右の縁）と h は C1, C2, 左の縁の d から出す"""
-    a, h, _ = lane_delta_d(road_w=4.0)
-    return {ln: float(np.hypot(a + y, h)) for ln, y in LANE_OFFSET.items()}
+LANE_OFFSET = {3: 1.0, 2: 2.0, 1: 3.0}     # 右の縁（レーダーに近い側）からの水平距離 [m]
 
 
-def fit_fixed_d(r_obs, t, d):
-    """d を固定して (v, t_min) を最小二乗で決める（analyze_1001.profile_d と同じ探索）。
-    戻り値の p は、等速モデルが予測する走路上の位置（垂線の足から C5 向きが正）"""
-    sign = -1.0 if r_obs[-1] < r_obs[0] else +1.0              # 接近なら t < t_min
-    best = None
-    for v in np.linspace(0.5, 6.0, 221):
-        q = np.sqrt(np.maximum(r_obs**2 - d**2, 0)) / v
-        t_min = np.mean(t - sign * q)
-        p = sign * v * (t - t_min)                              # 接近・離反とも奥（C5 側）が正
-        r_th = np.hypot(p, d)
-        rms = np.sqrt(np.mean((r_obs - r_th)**2))
-        if best is None or rms < best[2]:
-            best = (v, t_min, rms, p, r_th)
-    return best                                                # v, t_min, rms, (T,) p, (T,) R_theory
+def lane_range(lane):
+    """申告レーンを通ったときに観測される R の範囲 (R_near, R_far) [m]"""
+    a, h, _ = lane_delta_d(road_w=4.0)     # a: レーダー直下→右の縁、h: 設置高
+    d = float(np.hypot(a + LANE_OFFSET[lane], h))
+    return d, float(np.hypot(L_C1_C5 - S0, d))
+
+
+def plot_start_by_lane(mode, dr, r_lo, r_hi, out):
+    """同じ手段・向きの9本（3レーン × 3回）を、開始点付近の距離帯に拡大して並べる。
+
+    接近の開始点は奥の端（C5/C6）、離反の開始点は手前の端（C1/C2）。
+    横方向 1 m のずれが R に効く割合は (横方向の水平距離)/R なので、奥では約 0.27 m、
+    手前では約 0.6 m。レーン差が R に出るかを、真値の開始 R の線と並べて見る
+    """
+    runs = [n for n in range(1, N_MAIN + 1) if condition(n)[0] == mode and condition(n)[2] == dr]
+    colors = {1: "tab:blue", 2: "tab:orange", 3: "tab:green"}
+    fig, axes = plt.subplots(3, 3, figsize=(11, 9), sharex=True, sharey=True, layout="constrained")
+    for n in runs:
+        _, lane, _ = condition(n)
+        rep = sum(1 for m in runs if condition(m)[1] == lane and m < n)       # 0, 1, 2
+        ax = axes[lane - 1, rep]
+        pw, _, rng, t, *_ = moving_power_db(npz_path(TAGS[n - 1]))       # (F, R), (R,), (F,)
+        keep = (rng >= r_lo - 1) & (rng <= r_hi + 1)
+        im = ax.pcolormesh(t, rng[keep], pw[:, keep].T, shading="auto", cmap="gray_r", vmin=12, vmax=35)
+        for o in (1, 2, 3):
+            r0 = lane_range(o)[1 if dr == "app" else 0]                   # 開始点の R
+            ax.axhline(r0, color=colors[o], lw=1.6 if o == lane else 0.8, ls="-" if o == lane else ":")
+        ax.set_title(f"No.{n}  lane{lane}  rep{rep + 1}", fontsize=9)
+        ax.set_ylim(r_lo, r_hi)
+    for i in range(3):
+        axes[i, 0].set_ylabel(f"lane{i + 1}\nrange R [m]")
+        axes[2, i].set_xlabel("time [s]")
+    handles = [plt.Line2D([], [], color=colors[o], label=f"lane{o} start R (truth) "
+                          f"{lane_range(o)[1 if dr == 'app' else 0]:.2f} m") for o in (1, 2, 3)]
+    fig.legend(handles=handles, loc="outside lower center", fontsize=8, ncol=3)
+    fig.suptitle(f"{mode} {'approach (start = far end C5/C6)' if dr == 'app' else 'depart (start = near end C1/C2)'}"
+                 f"  -  solid: declared lane, dotted: other lanes. range bin 0.846 m", fontsize=10)
+    fig.colorbar(im, ax=axes, label="moving power [dB]", shrink=0.6)
+    fig.savefig(out, dpi=110)
+    plt.close(fig)
+    print(f"-> {out.relative_to(ROOT)}")
 
 
 def main():
-    dl = lane_d()
-    print("各レーンの最接近距離 d（道幅 4 m 実測・1 m 間隔）: "
-          + ", ".join(f"レーン{ln} {dl[ln]:.2f} m" for ln in (1, 2, 3)))
+    for ln in (1, 2, 3):
+        rn, rf = lane_range(ln)
+        print(f"レーン{ln}: 真値の R 範囲 {rn:.2f}–{rf:.2f} m")
 
-    runs = []
+    outdir = ROOT / "figures/lane_truth"
+    outdir.mkdir(exist_ok=True)
+    for old in outdir.glob("*.png"):          # 旧版（当てはめ曲線つき・31枚）を残さない
+        old.unlink()
+
     for n in range(1, N_MAIN + 1):
         mode, lane, dr = condition(n)
+        r_near, r_far = lane_range(lane)
+        pw, _, rng, t, *_ = moving_power_db(npz_path(TAGS[n - 1]))   # (F, R), (R,), (F,)
         g = pick_ridge(TAGS[n - 1])
-        if g is None or len(g["f"]) < 10:
-            continue
-        own = fit_fixed_d(g["rng"], g["t"], dl[lane])
-        others = [fit_fixed_d(g["rng"], g["t"], dl[o])[2] for o in (1, 2, 3) if o != lane]
-        runs.append(dict(n=n, mode=mode, lane=lane, dr=dr, r=g["rng"], fit=own, rms_other=min(others)))
 
-    # 表: 申告レーンでの残差と、他レーンで当てはめたときとの差
-    print(f"\n{'No.':>4} {'手段':>5} {'レーン':>4} {'向き':>4} {'点数':>4} {'v[m/s]':>7} "
-          f"{'平均ずれ[m]':>10} {'rms[m]':>7} {'他レーン最良rms':>14} {'見えた範囲 p[m]':>16}")
-    for u in runs:
-        v, _, rms, p, r_th = u["fit"]
-        bias = np.mean(u["r"] - r_th)
-        print(f"{u['n']:4d} {u['mode']:>5} {u['lane']:4d} {u['dr']:>4} {len(u['r']):4d} {v:7.2f} "
-              f"{bias:+10.3f} {rms:7.3f} {u['rms_other']:14.3f} {p.min():7.1f}–{p.max():5.1f}")
-    rms_all = np.array([u["fit"][2] for u in runs])
-    gap = np.array([u["rms_other"] - u["fit"][2] for u in runs])
-    print(f"\n  対象 {len(runs)} 本。申告レーンでの rms: 中央値 {np.median(rms_all):.3f} m"
-          f"（距離分解能 0.846 m）")
-    print(f"  他レーンの d にしたときの rms の増分: 中央値 {np.median(gap):+.4f} m、"
-          f"最大 {gap.max():+.4f} m -> レーン間で当てはまりの差はほぼ無い")
+        fig, ax = plt.subplots(figsize=(8, 5.5), layout="constrained")
+        keep = (rng >= 15) & (rng <= 55)
+        im = ax.pcolormesh(t, rng[keep], pw[:, keep].T, shading="auto", cmap="gray_r", vmin=12, vmax=35)
+        ax.axhspan(r_near, r_far, color="tab:blue", alpha=0.12,
+                   label=f"truth: R range of the declared path ({r_near:.1f}-{r_far:.1f} m)")
+        ax.axhline(r_near, color="tab:blue", lw=1.2)
+        ax.axhline(r_far, color="tab:blue", lw=1.2)
+        for name, r in CONES.items():
+            ax.axhline(r, color="tab:red", lw=0.5, ls="--")
+            ax.text(t[-1], r, f" {name}", color="tab:red", fontsize=7, va="center")
+        if g is not None:
+            # 追跡は濃い筋ではなく別の筋や静止物の帯を拾うことがある（No.19, 22, 28 で確認）。参考表示に留める
+            ax.plot(g["t"], g["rng"], "o", ms=3, mfc="none", mec="tab:orange", alpha=0.8,
+                    label="tracker output (reference; may follow a wrong streak)")
+        ax.set_ylim(15, 55)
+        ax.set_xlabel("time [s]")
+        ax.set_ylabel("range R [m]")
+        ax.set_title(f"No.{n}  {mode} lane{lane} {'approach' if dr == 'app' else 'depart'}", fontsize=10)
+        ax.legend(fontsize=7, loc="upper right")
+        fig.colorbar(im, ax=ax, label="moving power [dB]")
+        fig.savefig(outdir / f"No{n:02d}_{mode}_lane{lane}_{dr}.png", dpi=110)
+        plt.close(fig)
+    print(f"\n-> figures/lane_truth/ に {N_MAIN} 枚")
 
-    # 図: 上段 = 観測点と3レーンの理論曲線、下段 = 申告レーンに対する残差。列は (手段, レーン)
-    cols = [(m, ln) for m in ("walk", "bike") for ln in (1, 2, 3)]
-    fig, axes = plt.subplots(2, len(cols), figsize=(3.0 * len(cols), 6.4), sharex=True,
-                             gridspec_kw=dict(height_ratios=[2, 1]))
-    pp = np.linspace(-S0, 45, 300)                               # C1 の位置（-S0）から奥まで
-    colors = {1: "tab:blue", 2: "tab:orange", 3: "tab:green"}
-    for j, (m, ln) in enumerate(cols):
-        ax, axr = axes[0, j], axes[1, j]
-        for o in (1, 2, 3):
-            ax.plot(pp, np.hypot(pp, dl[o]), color=colors[o], lw=1.6 if o == ln else 0.7,
-                    ls="-" if o == ln else ":", label=f"lane{o} truth" if j == 0 else None)
-        sel = [u for u in runs if u["mode"] == m and u["lane"] == ln]
-        for u in sel:
-            _, _, _, p, r_th = u["fit"]
-            mk = "o" if u["dr"] == "app" else "^"
-            ax.plot(p, u["r"], mk, ms=2.5, color="k", alpha=0.5)
-            axr.plot(p, u["r"] - r_th, mk, ms=2.5, color="k", alpha=0.5)
-        ax.axvline(-S0, color="tab:red", lw=0.6, ls="--")
-        ax.axvline(0, color="tab:red", lw=0.6)
-        ax.set_title(f"{m} lane{ln}  (n={len(sel)})", fontsize=9)
-        ax.set_ylim(18, 52)
-        ax.grid(alpha=0.3)
-        axr.axhspan(-0.423, 0.423, color="gray", alpha=0.15)    # ±半ビン（距離分解能 0.846 m）
-        axr.axhline(0, color=colors[ln], lw=1)
-        axr.set_ylim(-2, 2)
-        axr.set_xlabel("position along road p [m]\n(0 = closest approach)")
-        axr.grid(alpha=0.3)
-    axes[0, 0].set_ylabel("range R [m]")
-    axes[1, 0].set_ylabel("R obs - R truth [m]")
-    axes[0, 0].legend(fontsize=7, loc="upper left")
-    fig.suptitle("Observed tracks vs lane truth (d fixed to declared lane; v, t_min fitted). "
-                 "o: approach, ^: depart. gray band: +-half range bin", fontsize=10)
-    fig.tight_layout()
-    out = ROOT / "figures/night_lane_truth.png"
-    fig.savefig(out, dpi=120)
-    print(f"\n-> {out.relative_to(ROOT)}")
+    plot_start_by_lane("bike", "app", 42, 54, ROOT / "figures/bike_app_start_by_lane.png")
+    plot_start_by_lane("bike", "dep", 17, 35, ROOT / "figures/bike_dep_start_by_lane.png")
 
 
 if __name__ == "__main__":
