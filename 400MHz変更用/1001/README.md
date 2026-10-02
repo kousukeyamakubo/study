@@ -348,6 +348,18 @@ $\hat{d}$ と、実測 $y_r, h$ から計算した $d(Y) = \sqrt{(Y+y_r)^2 + h^2
 - **斜めの筋**が移動目標。右下がりなら接近、右上がりなら離反
 - 目標以外の斜め筋は、写り込んだ他の歩行者・自転車
 
+### `figures/range_time_nomti.png` / `figures/night_range_time_nomti.png` — MTI なしの距離−時間
+
+`range_time.png`（日中4本）と `night_range_time.png`（夜の代表6本）の MTI なし版。並びは同じ。
+電力の定義も同じで、チャープ平均の減算をせず、DC ビンも除外しないことだけが違う。
+カラースケールは 20〜80 dB（MTI あり版とは別）。
+
+- **目標の筋は見えない。** 全距離・全時刻で静止物（DC ビン）が最大になり、目標（MTI 後 20〜33 dB）は
+  静止クラッタ（40〜63 dB）の 20〜40 dB 下に埋もれている
+- この図は目標を見る図ではなく、**静止クラッタが距離ごとにどれだけ居るか**を見る図
+- 夜36本の中央値では、R 21〜27 m のクラッタは約 46 dB で、27〜42 m（51〜63 dB）より低い。
+  少なくともこの距離帯では、手前で目標が弱く見える理由をクラッタの強さに帰すのは難しい
+
 ### `figures/tracks.png` — 抽出した軌跡
 
 各ファイルから取り出した「本物らしい尾根」の $R(t)$。
@@ -377,3 +389,6 @@ $d$ を 5 倍動かしても rms は 1.16 倍しか変わらない。つまり�
 | `figures/night_intensity_vs_range.png` | 夜36本の距離帯ごとの目標強度（手前で弱いことの図） |
 | `figures/night_d_identifiability.png` | 夜の残差の $d$ 依存と、見えている最小距離ごとの $\hat d$ のばらつき |
 | `analyze_night.py` | §6 の表と図を再生成する（`data/export_nomti/` も要る） |
+| `figures/range_time_nomti.png` | 日中4本の距離−時間（MTI なし） |
+| `figures/night_range_time_nomti.png` | 夜の代表6本の距離−時間（MTI なし） |
+| `plot_range_time_nomti.py` | 上記2枚を再生成する（`data/export_nomti/` が要る） |
