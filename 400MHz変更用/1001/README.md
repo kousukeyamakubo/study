@@ -4,6 +4,7 @@
 雨で 9/29・9/30 が流れたため、下見・収録・解析・資料作成が 10/1 に集中している。
 
 計画の全体像と 9/28 の事前検証は `../0928/README.md` と `../0928/verification_0928.md` を参照。
+データにかけている処理（.dat → RD → 距離−時間 → 軌跡 → $d$ の当てはめ）と MTI の注意点は `processing.md` にまとめた。
 
 ---
 
@@ -353,7 +354,7 @@ $\hat{d}$ と、実測 $y_r, h$ から計算した $d(Y) = \sqrt{(Y+y_r)^2 + h^2
 
 ### `figures/range_time_nomti.png` / `figures/night_range_time_nomti.png` — MTI なしの距離−時間
 
-`range_time.png`（日中4本）と `night_range_time.png`（夜の代表6本）の MTI なし版。並びは同じ。
+`range_time.png`（日中4本）と `night_range_time.png`（夜の代表12本）の MTI なし版。並びは同じ。
 電力の定義も同じで、チャープ平均の減算をせず、DC ビンも除外しないことだけが違う。
 カラースケールは 20〜80 dB（MTI あり版とは別）。
 
@@ -392,6 +393,7 @@ $d$ を 5 倍動かしても rms は 1.16 倍しか変わらない。つまり�
 | `figures/night_intensity_vs_range.png` | 夜36本の距離帯ごとの目標強度（手前で弱いことの図） |
 | `figures/night_d_identifiability.png` | 夜の残差の $d$ 依存と、見えている最小距離ごとの $\hat d$ のばらつき |
 | `analyze_night.py` | §6 の表と図を再生成する（`data/export_nomti/` も要る） |
+| `processing.md` | 処理の流れの説明（各段の中身・パラメータ・MTI の注意点） |
 | `figures/range_time_nomti.png` | 日中4本の距離−時間（MTI なし） |
-| `figures/night_range_time_nomti.png` | 夜の代表6本の距離−時間（MTI なし） |
+| `figures/night_range_time_nomti.png` | 夜の代表12本の距離−時間（MTI なし） |
 | `plot_range_time_nomti.py` | 上記2枚を再生成する（`data/export_nomti/` が要る） |

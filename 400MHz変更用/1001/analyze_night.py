@@ -299,12 +299,18 @@ def part_c():
     return r_nears, sig, dd
 
 
+# 距離−時間図に載せる代表12本。上段が徒歩・下段が自転車で、各レーンの接近と離反を1本ずつ。
+# 徒歩と自転車で同じ位置に同じレーン・向きが来るように揃え、手段の違いを縦に見比べられるようにする
+RANGE_TIME_PICK = [[1, 2, 7, 8, 13, 14],
+                   [19, 20, 25, 26, 31, 32]]
+
+
 def plot_range_time():
-    """代表6本（自転車の各レーン、接近と離反）の距離−時間。コーンの斜距離を赤破線で重ねる。
+    """代表12本（徒歩・自転車の各レーン、接近と離反）の距離−時間。コーンの斜距離を赤破線で重ねる。
     目標が R 31〜33 m より手前で見えなくなることを、処理を挟まずに見せるための図"""
-    pick = [19, 20, 25, 26, 31, 32]
-    fig, axes = plt.subplots(1, len(pick), figsize=(3.3 * len(pick), 4.6), sharey=True)
-    for ax, n in zip(axes, pick):
+    n_row, n_col = len(RANGE_TIME_PICK), len(RANGE_TIME_PICK[0])
+    fig, axes = plt.subplots(n_row, n_col, figsize=(3.3 * n_col, 4.6 * n_row), sharey=True)
+    for ax, n in zip(axes.ravel(), sum(RANGE_TIME_PICK, [])):
         mode, lane, dr = condition(n)
         pw, _, rng, t, *_ = moving_power_db(npz_path(TAGS[n - 1]))   # (F, R)
         keep = rng <= 60
@@ -313,7 +319,8 @@ def plot_range_time():
             ax.axvline(r, color="r", lw=0.6, ls="--")
         ax.set_title(f"#{n} {mode} lane{lane} {'approach' if dr == 'app' else 'depart'}", fontsize=9)
         ax.set_xlabel("range R [m]")
-    axes[0].set_ylabel("time [s]")
+    for ax in axes[:, 0]:
+        ax.set_ylabel("time [s]")
     fig.colorbar(im, ax=axes, label="moving power [dB]")
     fig.savefig(ROOT / "figures/night_range_time.png", dpi=110, bbox_inches="tight")
 

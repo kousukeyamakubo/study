@@ -1,4 +1,4 @@
-# 距離−時間図の MTI なし版。figures/range_time.png（日中4本）と figures/night_range_time.png（夜の代表6本）
+# 距離−時間図の MTI なし版。figures/range_time.png（日中4本）と figures/night_range_time.png（夜の代表12本）
 # と同じ並びで描く。
 #
 # MTI あり版は静止成分を消した後の図なので、「消した後に何が残ったか」しか見えない。
@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from analyze_1001 import RUNS
-from analyze_night import CONES, TAGS, ROOT, condition, npz_path
+from analyze_night import CONES, RANGE_TIME_PICK, TAGS, ROOT, condition, npz_path
 
 RMAX = 60.0
 VMIN, VMAX = 20.0, 80.0     # MTI なしは静止クラッタが 50〜80 dB に達するので、MTI あり版（10〜35/40）とは別スケール
@@ -32,8 +32,10 @@ def power_nomti_db(tag):
 
 
 def draw(tags, titles, out, cones):
-    fig, axes = plt.subplots(1, len(tags), figsize=(3.3 * len(tags), 4.6), sharey=True)
-    for ax, tag, title in zip(axes, tags, titles):
+    """tags, titles は行ごとのリストのリスト（1行なら [[...]]）"""
+    n_row, n_col = len(tags), len(tags[0])
+    fig, axes = plt.subplots(n_row, n_col, figsize=(3.3 * n_col, 4.6 * n_row), sharey=True, squeeze=False)
+    for ax, tag, title in zip(axes.ravel(), sum(tags, []), sum(titles, [])):
         pw, rng, t = power_nomti_db(tag)
         keep = rng <= RMAX
         im = ax.pcolormesh(rng[keep], t, pw[:, keep], shading="auto", cmap="viridis", vmin=VMIN, vmax=VMAX)
@@ -42,7 +44,8 @@ def draw(tags, titles, out, cones):
                 ax.axvline(r, color="r", lw=0.6, ls="--")
         ax.set_title(title, fontsize=9)
         ax.set_xlabel("range R [m]")
-    axes[0].set_ylabel("time [s]")
+    for ax in axes[:, 0]:
+        ax.set_ylabel("time [s]")
     fig.colorbar(im, ax=axes, label="power, no MTI, DC included [dB]")
     fig.savefig(out, dpi=110, bbox_inches="tight")
     print(f"-> {out.relative_to(ROOT)}")
@@ -50,16 +53,17 @@ def draw(tags, titles, out, cones):
 
 def main():
     # 日中4本（range_time.png と同じ順）
-    draw(list(RUNS), [en for _, en in RUNS.values()], ROOT / "figures/range_time_nomti.png", cones=False)
+    draw([list(RUNS)], [[en for _, en in RUNS.values()]], ROOT / "figures/range_time_nomti.png", cones=False)
 
-    # 夜の代表6本（night_range_time.png と同じ: 自転車の各レーン、接近と離反）
-    pick = [19, 20, 25, 26, 31, 32]
+    # 夜の代表12本（night_range_time.png と同じ: 上段が徒歩・下段が自転車、各レーンの接近と離反）
     titles = []
-    for n in pick:
-        mode, lane, dr = condition(n)
-        titles.append(f"#{n} {mode} lane{lane} {'approach' if dr == 'app' else 'depart'}")
-    draw([TAGS[n - 1] for n in pick], titles, ROOT / "figures/night_range_time_nomti.png", cones=True)
-
+    for row in RANGE_TIME_PICK:
+        titles.append([])
+        for n in row:
+            mode, lane, dr = condition(n)
+            titles[-1].append(f"#{n} {mode} lane{lane} {'approach' if dr == 'app' else 'depart'}")
+    draw([[TAGS[n - 1] for n in row] for row in RANGE_TIME_PICK], titles,
+         ROOT / "figures/night_range_time_nomti.png", cones=True)
 
 if __name__ == "__main__":
     main()
