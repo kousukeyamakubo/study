@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from model import (GRID_X, GRID_Y, RawPhaseGroundNet, load_virt_array,  # noqa: E402
                    select_virtual_elements, to_input_channels)
 
-REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 SAMPLE_NPZ = REPO_ROOT / "atlas_log_20260727_195113_rd.npz"
 
 

@@ -32,7 +32,7 @@
 ```
 WaveFarer（外部 EM シミュレーター）
     ↓ CSV（複素インパルス応答: Time / 振幅 / 位相）
-0601meeting/rad_from_csv.ipynb
+weekly/0601meeting/rad_from_csv.ipynb
     ↓ Cyclist_env_RDA_2nano.py を介して FFT 処理
     RD マップ（N_FIXED, N_chirp, N_range）
     ↓

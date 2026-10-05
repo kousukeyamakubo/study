@@ -27,7 +27,7 @@ import torch.nn.functional as F
 
 # ===== パス =====
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-ROOT_DIR   = os.path.normpath(os.path.join(SCRIPT_DIR, ".."))
+ROOT_DIR   = os.path.normpath(os.path.join(SCRIPT_DIR, "..", ".."))
 
 MODEL_PATH = os.path.join(ROOT_DIR, "models", "best_detector_narrow_angle.pt")
 META_CSV   = os.path.join(ROOT_DIR, "learn_dataset_narrow_angle_fixed", "metadata.csv")

@@ -31,8 +31,8 @@ description: 週次ミーティング報告用のパワポ（日本語・英語�
 
 ## 週次フォルダの解決
 
-`meeting/YYYY-MM-DD.md` のファイル名からMMDDを取り出し、リポジトリルート直下で
-その4桁から始まるディレクトリ（`0908/`, `0705meeting/`, `0713poster/` など、接尾辞の
+`meeting/YYYY-MM-DD.md` のファイル名からMMDDを取り出し、`weekly/` 直下で
+その4桁から始まるディレクトリ（`weekly/0908/`, `weekly/0705meeting/`, `weekly/0713poster/` など、接尾辞の
 有無は問わない）をglobで探す。
 
 - 一致が1件 → それを使う
@@ -90,7 +90,7 @@ description: 週次ミーティング報告用のパワポ（日本語・英語�
       "bullets": [ /* 左カラムの箇条書き */ ],
       "images": [
         {
-          "path": "0908/matching/example.png",  // リポジトリルートからの相対パス
+          "path": "weekly/0908/matching/example.png",  // リポジトリルートからの相対パス
           "caption": {"ja": "...", "en": "..."}   // 省略可
         }
       ]

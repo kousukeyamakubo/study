@@ -10,7 +10,7 @@
 | `check.ipynb` | メイン: 学習・評価・可視化 |
 | `learn_data_generator.ipynb` | データセット生成 |
 | `monte-carlo-simulation.ipynb` | モンテカルロ評価・CFAR比較 |
-| `0601meeting/rad_from_csv.ipynb` | WaveFarer CSV → RD マップ変換（現フェーズの検証中心） |
+| `weekly/0601meeting/rad_from_csv.ipynb` | WaveFarer CSV → RD マップ変換（現フェーズの検証中心） |
 | `main.ipynb` | システムパラメータ・SNR計算（2GHz/400MHz比較） |
 | `calculate_SNR.ipynb` | SNR計算補助 |
 | `models/best_detector_narrow_angle.pt` | 現在の最良モデル重み（narrow角度グリッド対応） |
