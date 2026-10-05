@@ -50,6 +50,16 @@ COLS = [(1, "app"), (1, "dep"), (2, "app"), (2, "dep"), (3, "app"), (3, "dep")]
 SIGN_NOTE = "angle sign convention unverified"
 EXCESS_THR = 6.0                 # 「目標がいる」とみなす、最強セルの電力の走行内中央値からの超過 [dB]
 
+# カラースケールは MTI あり / フレーム間差分で共通にする（見比べたときに色の違いがそのまま dB の違いになるように）。
+# 差分は独立な雑音 2 フレームの差なので、雑音床はそれだけで約 +3 dB 高く出る
+PW_LIM = (15.0, 45.0)            # 距離−時間・ドップラー−時間 [dB]
+ANG_LIM = (0.0, 30.0)            # 角度スペクトル [dB]（to_ra は素子窓の和で割るので、上の電力とは基準が違う）
+
+# 分解能（docs/realworld.md §2）。横軸に 1 個ぶんの幅のバーを描いて、ぱっと見で分かるようにする
+RANGE_RES = 0.846                # [m]
+VEL_RES = 0.5995                 # [m/s]
+ANG_RES = 14.5                   # [deg] 正面での文書値。正面から θ ずれると約 1/cos θ 倍に広がる
+
 
 # ------------------------------------------------------------------
 # 1 走行ぶんの量
@@ -182,6 +192,32 @@ def bin_edges(c):
     return np.concatenate([c - h, [c[-1] + h]])
 
 
+def res_bar(ax, what, y_frac=0.97, label=True):
+    """横軸の分解能 1 個ぶんの幅の白いバーを、パネル上端に描く。
+
+    角度は方向余弦 u = sin θ の上で等間隔なので、θ では正面から離れるほど広がる。
+    正面（0°）と、目標が主に通る +30° 付近の 2 か所に置いて広がり方を見せる
+    """
+    tr = ax.get_xaxis_transform()     # x はデータ座標、y は軸の割合
+    if what == "range":
+        x0 = R_HI - 5.0
+        bars = [(x0 - RANGE_RES, x0, f"{RANGE_RES:.2f} m")]
+    elif what == "dop":
+        x0 = 4.2 - 1.5 * VEL_RES       # 右端から 2 ビン目（ラベルが枠からはみ出さないように）
+        bars = [(x0 - VEL_RES / 2 - VEL_RES, x0 - VEL_RES / 2, f"{VEL_RES:.2f} m/s")]
+    else:
+        bars = []
+        for c in (0.0, 30.0):
+            w = ANG_RES / np.cos(np.radians(c))
+            bars.append((c - w / 2, c + w / 2, f"{w:.1f}°"))
+    for a, b, txt in bars:
+        ax.plot([a, b], [y_frac, y_frac], transform=tr, color="w", lw=2.5, solid_capstyle="butt")
+        ax.plot([a, a], [y_frac - 0.012, y_frac + 0.012], transform=tr, color="w", lw=1)
+        ax.plot([b, b], [y_frac - 0.012, y_frac + 0.012], transform=tr, color="w", lw=1)
+        if label:
+            ax.text((a + b) / 2, y_frac - 0.015, txt, transform=tr, color="w", fontsize=7, ha="center", va="top")
+
+
 def grid_figure(maps, mode, kind, what, geo, out):
     """手段 mode の 18 本を、ドップラー−時間（what="dop"）または角度−時間（what="ang"）で並べる"""
     pos = run_grid(mode)
@@ -191,18 +227,18 @@ def grid_figure(maps, mode, kind, what, geo, out):
         m = maps[n][kind]
         lane, dr = COLS[col]
         if what == "dop":
-            vmin, vmax = (10, 40) if kind == "mti" else (15, 45)
             im = ax.pcolormesh(bin_edges(m["vel"]), bin_edges(m["t"]), m["dt"], shading="flat",
-                               cmap="viridis", vmin=vmin, vmax=vmax)
+                               cmap="viridis", vmin=PW_LIM[0], vmax=PW_LIM[1])
             if kind == "mti":
                 ax.axvline(m["vel"][m["dc"]], color="w", lw=0.5, ls=":")   # DC は MTI で消えている
         else:
-            vmin, vmax = (5, 30) if kind == "mti" else (10, 35)
-            im = ax.pcolormesh(ANG, m["t"], m["ang"], shading="nearest", cmap="viridis", vmin=vmin, vmax=vmax)
+            im = ax.pcolormesh(ANG, m["t"], m["ang"], shading="nearest", cmap="viridis",
+                               vmin=ANG_LIM[0], vmax=ANG_LIM[1])
             p = m["present"]
             ax.plot(expected_angle(m["pk_r"][p], lane, *geo), m["t"][p], ".", ms=2.5, color="tab:red",
                     label="expected angle at the peak range (declared lane)")
             ax.set_xlim(-90, 90)
+        res_bar(ax, what, label=(row, col) == (0, 0))   # 細い格子では数値が重なるので左上だけに書く
         ax.set_title(f"#{n} {mode} lane{lane} {'approach' if dr == 'app' else 'depart'}", fontsize=9)
     for ax in axes[:, 0]:
         ax.set_ylabel("time [s]")
@@ -210,13 +246,15 @@ def grid_figure(maps, mode, kind, what, geo, out):
         ax.set_xlabel("radial velocity [m/s]" if what == "dop" else "angle [deg]")
     src = "MTI (chirp mean)" if kind == "mti" else "no MTI, frame difference (DC included)"
     if what == "dop":
-        title = f"{mode}: Doppler-time, max over R {R_LO:.0f}-{R_HI:.0f} m  [{src}]  + = receding"
-        label = "power [dB]"
+        title = (f"{mode}: Doppler-time, max over R {R_LO:.0f}-{R_HI:.0f} m  [{src}]  + = receding\n"
+                 f"white bar: 1 bin = {VEL_RES:.2f} m/s")
+        label = "power [dB] (same scale for MTI / frame diff)"
     else:
         title = (f"{mode}: angle-time, angle spectrum of the strongest cell in R {R_LO:.0f}-{R_HI:.0f} m  [{src}]\n"
                  f"red dots: expected angle (yaw {geo[0]:.1f} deg, sign {geo[1]:+d}, fitted on bike lane1)"
-                 f" at frames with a target.  {SIGN_NOTE}")
-        label = "angle spectrum [dB]"
+                 f" at frames with a target.  {SIGN_NOTE}\n"
+                 f"white bars: angular resolution, {ANG_RES} deg at 0 deg and {ANG_RES / np.cos(np.radians(30)):.1f} deg at 30 deg (top-left panel labelled)")
+        label = "angle spectrum [dB] (same scale for MTI / frame diff)"
     fig.suptitle(title, fontsize=10)
     fig.colorbar(im, ax=axes, label=label, shrink=0.6)
     fig.savefig(out, dpi=100, bbox_inches="tight")
@@ -231,30 +269,34 @@ def run_figure(maps, n, geo, out):
     fig, axes = plt.subplots(2, 3, figsize=(13, 9), sharey=True)
     for row, kind in enumerate(("mti", "fd")):
         m = maps[n][kind]
-        lo = 10 if kind == "mti" else 15
         ax = axes[row, 0]
         keep = (m["rng"] >= R_LO) & (m["rng"] <= R_HI)
         im0 = ax.pcolormesh(m["rng"][keep], m["t"], m["rt"][:, keep], shading="nearest", cmap="viridis",
-                            vmin=lo, vmax=lo + 30)
+                            vmin=PW_LIM[0], vmax=PW_LIM[1])
         ax.axvspan(*NEAR, color="w", alpha=0.15)
         for r in CONES.values():
             ax.axvline(r, color="r", lw=0.5, ls="--")
-        ax.set_xlabel("range R [m]")
+        res_bar(ax, "range")
+        ax.set_xlabel(f"range R [m]\n(bar: 1 bin = {RANGE_RES} m)")
         ax.set_ylabel(f"{'MTI' if kind == 'mti' else 'no MTI, frame diff'}\ntime [s]")
         ax = axes[row, 1]
-        ax.pcolormesh(bin_edges(m["vel"]), bin_edges(m["t"]), m["dt"], shading="flat", cmap="viridis", vmin=lo, vmax=lo + 30)
-        ax.set_xlabel("radial velocity [m/s]  (+ = receding)")
+        ax.pcolormesh(bin_edges(m["vel"]), bin_edges(m["t"]), m["dt"], shading="flat", cmap="viridis",
+                      vmin=PW_LIM[0], vmax=PW_LIM[1])
+        res_bar(ax, "dop")
+        ax.set_xlabel(f"radial velocity [m/s], + = receding\n(bar: 1 bin = {VEL_RES:.2f} m/s)")
         ax = axes[row, 2]
-        im2 = ax.pcolormesh(ANG, m["t"], m["ang"], shading="nearest", cmap="viridis", vmin=lo - 5, vmax=lo + 20)
+        im2 = ax.pcolormesh(ANG, m["t"], m["ang"], shading="nearest", cmap="viridis",
+                            vmin=ANG_LIM[0], vmax=ANG_LIM[1])
         p = m["present"]
         ax.plot(expected_angle(m["pk_r"][p], lane, *geo), m["t"][p], ".", ms=3, color="tab:red")
         # 最強セルが近い端の帯にあるフレームを印す（距離−時間図で見えていない区間の痕跡）
         nr = p & (m["pk_r"] >= NEAR[0]) & (m["pk_r"] <= NEAR[1])
         ax.plot(np.full(nr.sum(), 85), m["t"][nr], ">", ms=4, color="w")
         ax.set_xlim(-90, 90)
-        ax.set_xlabel(f"angle [deg]  ({SIGN_NOTE})")
-        fig.colorbar(im0, ax=axes[row, :2], label="power [dB]", shrink=0.8)
-        fig.colorbar(im2, ax=axes[row, 2], label="angle spectrum [dB]", shrink=0.8)
+        res_bar(ax, "ang")
+        ax.set_xlabel(f"angle [deg]  ({SIGN_NOTE})\nbars: resolution ({ANG_RES} deg at 0 deg, wider off-axis)")
+        fig.colorbar(im0, ax=axes[row, :2], label="power [dB] (same scale both rows)", shrink=0.8)
+        fig.colorbar(im2, ax=axes[row, 2], label="angle spectrum [dB] (same scale both rows)", shrink=0.8)
     fig.suptitle(f"No.{n} {mode} lane{lane} {'approach' if dr == 'app' else 'depart'}  -  shaded: R {NEAR[0]:.0f}-{NEAR[1]:.0f} m;"
                  f"  red: expected angle at the peak range;  white >: peak cell inside R {NEAR[0]:.0f}-{NEAR[1]:.0f} m",
                  fontsize=10)
