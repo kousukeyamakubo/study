@@ -13,29 +13,29 @@
 
 | フォルダ | 内容 | サンプル数 | rd_maps.shape |
 |---|---|---|---|
-| `learn_dataset_narrow_angle_single/` | 単一物体（cy-only / ve-only 混在） | 600件 | (10, 89, 190) |
-| `learn_dataset_narrow_angle_fixed/` | 2物体同時（narrow角度グリッド） | 300件 | (10, 89, 190) |
-| `learn_dataset_narrow_angle_scenario/` | シナリオテスト（r_diff 段階変化） | 31件 | (10, 89, 190) |
-| `learn_dataset_single_angle/` | 単一物体（narrow角度グリッド、別生成） | 600件 | (10, 89, 190) |
+| `sim/learn_dataset_narrow_angle_single/` | 単一物体（cy-only / ve-only 混在） | 600件 | (10, 89, 190) |
+| `sim/learn_dataset_narrow_angle_fixed/` | 2物体同時（narrow角度グリッド） | 300件 | (10, 89, 190) |
+| `sim/learn_dataset_narrow_angle_scenario/` | シナリオテスト（r_diff 段階変化） | 31件 | (10, 89, 190) |
+| `sim/learn_dataset_single_angle/` | 単一物体（narrow角度グリッド、別生成） | 600件 | (10, 89, 190) |
 
 ### wide角度グリッド対応データセット（旧・参照用）
 
 | フォルダ | 内容 | サンプル数 | rd_maps.shape |
 |---|---|---|---|
-| `learn_dataset_single_object/` | 単一物体（cy-only / ve-only 混在） | 600件 | (10, 89, 190) |
-| `learn_dataset_fixed_angle/` | 2物体同時（固定角度グリッド対応） | 約300件 | (10, 89, 190) |
-| `learn_dataset_scenario_test/` | シナリオテスト（r_diff を段階的に変化） | 31件 | (10, 89, 190) |
+| `sim/learn_dataset_single_object/` | 単一物体（cy-only / ve-only 混在） | 600件 | (10, 89, 190) |
+| `sim/learn_dataset_fixed_angle/` | 2物体同時（固定角度グリッド対応） | 約300件 | (10, 89, 190) |
+| `sim/learn_dataset_scenario_test/` | シナリオテスト（r_diff を段階的に変化） | 31件 | (10, 89, 190) |
 
 ### 旧フォーマット（**モデル評価には使用不可**）
 
 | フォルダ | 内容 | rd_maps.shape | 問題 |
 |---|---|---|---|
-| `learn_dataset_ped_single/` | cyclist のみ（旧生成） | **(1, 89, 190)** | 角度1本。現行モデル(N_FIXED=10)と非互換 |
-| `learn_dataset_vehicle_single/` | vehicle のみ（旧生成） | **(1, 89, 190)** | 同上 |
+| `sim/learn_dataset_ped_single/` | cyclist のみ（旧生成） | **(1, 89, 190)** | 角度1本。現行モデル(N_FIXED=10)と非互換 |
+| `sim/learn_dataset_vehicle_single/` | vehicle のみ（旧生成） | **(1, 89, 190)** | 同上 |
 
 > **注意**: `ped_single` / `vehicle_single` は CSV カラム構成も異なる（`valid_cyclist` 等がなく `valid` のみ）。
 > 現行モデルへの入力として使うと全サンプルが背景判定になる（0% 検出）。
-> 単一ターゲットテストには `learn_dataset_single_object` を使うこと。
+> 単一ターゲットテストには `sim/learn_dataset_single_object` を使うこと。
 
 ## npz ファイル形式
 
@@ -84,7 +84,7 @@
 
 ### narrow角度グリッド（現行）
 
-`check.ipynb` の `GENERALIZATION_EXPERIMENT = True`（単一物体のみで学習する汎化実験）で学習したモデルを使用。
+`sim/check.ipynb` の `GENERALIZATION_EXPERIMENT = True`（単一物体のみで学習する汎化実験）で学習したモデルを使用。
 
 ```
 学習: 単一物体 280件  (narrow_angle_single[0:280])
@@ -93,7 +93,7 @@
 holdout（単一物体）: 260件  (narrow_angle_single[340:], RANDOM_SEED=42 でシャッフル後)
 ```
 
-> **注意**: 評価スクリプト（`experiments/eval_nn/`）は旧定義に基づき `narrow_angle_fixed[200:]` の100件のみを使っている。
+> **注意**: 評価スクリプト（`sim/experiments/eval_nn/`）は旧定義に基づき `narrow_angle_fixed[200:]` の100件のみを使っている。
 > 全300件に拡張可能。
 
 ### wide角度グリッド（旧・参照用）
@@ -120,5 +120,5 @@ w_cy = exp(-0.5 * ((angle_i - cy_true_angle) / σ_angle)^2)
 
 ## データ生成
 
-`learn_data_generator.ipynb` でデータ生成。
+`sim/learn_data_generator.ipynb` でデータ生成。
 シナリオテストデータは r_diff を連続的に変化させた固定シナリオ。

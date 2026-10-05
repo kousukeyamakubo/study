@@ -5,7 +5,7 @@
 
 ## モデル: RadarUNet3DSoftmax
 
-`check.ipynb` に実装。
+`sim/check.ipynb` に実装。
 
 ### 入出力形状
 

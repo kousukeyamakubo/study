@@ -1,15 +1,15 @@
 # 実験結果・現状の課題
 
-## 現在の最良結果 (models/best_detector_narrow_angle.pt)
+## 現在の最良結果 (sim/models/best_detector_narrow_angle.pt)
 
 学習設定: 単一物体 280件 + 2物体 170件（train）/ 単一物体 60件 + 2物体 30件（val）/ 2物体 100件（test）
-データセット: `learn_dataset_narrow_angle_single` + `learn_dataset_narrow_angle_fixed`
+データセット: `sim/learn_dataset_narrow_angle_single` + `sim/learn_dataset_narrow_angle_fixed`
 
-詳細な定量評価は `experiments/eval_nn/` を参照。
+詳細な定量評価は `sim/experiments/eval_nn/` を参照。
 
 ---
 
-## 旧最良結果 (models/best_detector_agnostic.pt)
+## 旧最良結果 (sim/models/best_detector_agnostic.pt)
 
 学習設定: 単一物体 280件 + 2物体 200件（train）/ 単一物体 60件（val）/ 2物体 100件（test）
 
@@ -55,12 +55,12 @@ r_diff（サイクリスト・車両のレンジビン差）を段階的に変�
 
 ## 実験フォルダ運用ルール
 
-新しい実験（スクリプト + 結果）は必ず `experiments/` 以下に専用フォルダを作成して格納する。
+新しい実験（スクリプト + 結果）は必ず `sim/experiments/` 以下に専用フォルダを作成して格納する。
 
 ### ディレクトリ構造
 
 ```
-experiments/
+sim/experiments/
 ├── eval_cfar/        ← CA-CFAR vs NN の PR曲線・AP比較
 ├── eval_nn/          ← narrow角度グリッドモデル (best_detector_narrow_angle.pt) の定量評価
 ├── sweep_narrow/     ← narrow角度グリッドモデルのハイパーパラメータ探索
@@ -71,7 +71,7 @@ experiments/
 各フォルダの内部構造:
 
 ```
-experiments/<カテゴリ>/
+sim/experiments/<カテゴリ>/
 ├── README.md               ← 目的・手順の説明
 ├── <実験スクリプト>.py     ← 実行・評価スクリプト
 └── <実験名>_results/       ← 出力ファイル（画像・CSV・JSON など）
@@ -90,20 +90,20 @@ experiments/<カテゴリ>/
 スクリプト内のパスはスクリプト自身の位置を基準にした相対パスで記述する。
 
 ```python
-# experiments/cfar_param_sweep/cfar_param_sweep.py の場合
+# sim/experiments/cfar_param_sweep/cfar_param_sweep.py の場合
 MIXED_META_CSV = "../../learn_dataset_fixed_angle/metadata.csv"
 OUTPUT_DIR     = "./cfar_param_sweep_results"
 ```
 
 ### 注意事項
 
-- ルートや他の実験フォルダに直接スクリプト・結果を置かない
-- 複数の実験で共有するデータセット（`learn_dataset_*/`）はルートに残す
-- モデル重み（`best_detector_*.pt`）もルートに残す
+- `sim/` 直下や他の実験フォルダに直接スクリプト・結果を置かない
+- 複数の実験で共有するデータセット（`sim/learn_dataset_*/`）は `sim/` 直下に置く
+- モデル重み（`best_detector_*.pt`）は `sim/models/` に置く
 
 ## 今後の検討事項
 
 - r_diff が小さい場合の分離精度向上（データ拡張？ラベル設計？）
 - val セットに 2物体データを追加
-- モンテカルロ評価での CFAR との定量比較（`monte-carlo-simulation.ipynb`）
+- モンテカルロ評価での CFAR との定量比較（`sim/monte-carlo-simulation.ipynb`）
 - 角度推定精度の定量評価（現状は d/r の hit rate のみ）

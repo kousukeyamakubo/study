@@ -2,6 +2,9 @@
 
 シミュレーションを触るとき、または物理的な挙動を解釈するときに参照する。
 
+> ここの仕様は **sim（28GHz・内製/WaveFarer）** のもの。実測の ATLAS（24GHz）とは分解能などが別物なので、
+> 並べるときは `docs/realworld.md` の値を使う（例: 距離分解能は sim 0.38 m/bin、ATLAS 0.846 m）。
+
 ## レーダーシステム仕様
 
 | パラメータ | 値 |
@@ -33,10 +36,10 @@
 WaveFarer（外部 EM シミュレーター）
     ↓ CSV（複素インパルス応答: Time / 振幅 / 位相）
 weekly/0601meeting/rad_from_csv.ipynb
-    ↓ Cyclist_env_RDA_2nano.py を介して FFT 処理
+    ↓ sim/Cyclist_env_RDA_2nano.py を介して FFT 処理
     RD マップ（N_FIXED, N_chirp, N_range）
     ↓
-check.ipynb / monte-carlo-simulation.ipynb で NN 検出・評価
+sim/check.ipynb / sim/monte-carlo-simulation.ipynb で NN 検出・評価
 ```
 
 ### CSV フォーマット
@@ -47,11 +50,11 @@ check.ipynb / monte-carlo-simulation.ipynb で NN 検出・評価
 | `\| Total Complex Impulse Response total \| (W)` | 受信電力（振幅） |
 | `Phase( Total Complex Impulse Response total ) (rad)` | 受信位相 |
 
-### Cyclist_env_RDA_2nano.py の役割
+### sim/Cyclist_env_RDA_2nano.py の役割
 
 EM シミュレーターではなく**レーダー信号処理モジュール**。
 WaveFarer CSV の受信信号を `rx_multiple()` で受け取り、`FFT()` で RD マップを生成する。
-`learn_data_generator.ipynb`（内製シミュレーター側）でも同じモジュールを使用している。
+`sim/learn_data_generator.ipynb`（内製シミュレーター側）でも同じモジュールを使用している。
 
 ## WaveFarer シミュレーションの既知問題
 

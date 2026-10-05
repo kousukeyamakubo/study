@@ -21,7 +21,7 @@
 | 卒論 | MUSIC 法による角度推定 → DFT/FFT で RD マップ作成 → CFAR 検出 |
 | DICOMO 提出 | 固定角度グリッドの RD マップスタックを入力とする UNet 検出器を構築。WaveFarer（建物なし・見通しあり）の CSV で検証 |
 | 8/17 まで | WaveFarer のシナリオを建物あり NLOS 交差点に更新し、同モデルで再検証 |
-| 実測フェーズ（0908〜） | **sim は一旦保留**。主軸は実測データ収集と後処理の整備に移行。詳細は `meeting/2026-09-08.md`・`weekly/0908/README.md` を参照 |
+| 実測フェーズ（0908〜） | **sim は一旦保留**。主軸は実測データ収集と後処理の整備に移行。センサ仕様・処理の流れ・注意点は `docs/realworld.md`。経緯は `meeting/2026-09-08.md`・`weekly/0908/README.md` |
 
 実測フェーズでの主な変更点:
 
@@ -35,8 +35,8 @@
 - **出力**: 各ボクセルの 3 クラス logits (B, 3, N_FIXED, H, W)（背景=0 / cyclist=1 / vehicle=2）
 - **検出対象**: サイクリスト・車両（同一 RD ビン上に重なる場合も含む）
 
-角度グリッドの種類（wide / narrow）は `docs/dataset.md` を参照。  
-レーダー仕様・シナリオ詳細・物理的な注意事項は `docs/simulation.md` を参照。
+角度グリッドの種類（wide / narrow）は `docs/sim/dataset.md` を参照。  
+レーダー仕様・シナリオ詳細・物理的な注意事項は `docs/sim/simulation.md` を参照。
 
 ## 評価指標
 
@@ -45,14 +45,15 @@
 
 ## シミュレーション系のファイル（保留中）
 
-実測フェーズ以前の主要ファイル。CLAUDE.md から移した。
+実測フェーズ以前の主要ファイル。CLAUDE.md から移した。ルートから `sim/` に移した後のパスで書いている。
+仕様・データセット・モデル・結果は `docs/sim/` を参照。
 
 | ファイル | 役割 |
 |---|---|
-| `check.ipynb` | メイン: 学習・評価・可視化 |
-| `learn_data_generator.ipynb` | データセット生成 |
-| `monte-carlo-simulation.ipynb` | モンテカルロ評価・CFAR比較 |
+| `sim/check.ipynb` | メイン: 学習・評価・可視化 |
+| `sim/learn_data_generator.ipynb` | データセット生成 |
+| `sim/monte-carlo-simulation.ipynb` | モンテカルロ評価・CFAR比較 |
 | `weekly/0601meeting/rad_from_csv.ipynb` | WaveFarer CSV → RD マップ変換 |
-| `main.ipynb` | システムパラメータ・SNR計算（2GHz/400MHz比較） |
-| `Cyclist_env_RDA_2nano.py` | RD マップ生成の処理系（学習データと同一） |
-| `models/best_detector_narrow_angle.pt` | sim での最良モデル重み（narrow角度グリッド対応） |
+| `sim/main.ipynb` | システムパラメータ・SNR計算（2GHz/400MHz比較） |
+| `sim/Cyclist_env_RDA_2nano.py` | RD マップ生成の処理系（学習データと同一） |
+| `sim/models/best_detector_narrow_angle.pt` | sim での最良モデル重み（narrow角度グリッド対応） |
