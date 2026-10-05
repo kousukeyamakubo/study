@@ -103,7 +103,7 @@ def detect_peaks(rd: np.ndarray, n_train=(2, 5), n_guard=(1, 2), pfa=1e-3,
                   sep_d=1, sep_r=2) -> list[np.ndarray]:
     """rd (Frame,TX,RX,Doppler,Range) から、フレームごとの検出ピーク [doppler_idx, range_idx] を返す。
 
-    しきい値・NMS の窓サイズは experiments/eval_cfar の sim 向けパラメータを実測の
+    しきい値・NMS の窓サイズは sim/experiments/eval_cfar の sim 向けパラメータを実測の
     ビン数（Doppler=16, Range=129）に合わせて縮小した初期値。実測で見ながら調整する。
     """
     power = incoherent_power(rd)                 # (F, D, R)

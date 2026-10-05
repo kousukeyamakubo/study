@@ -10,5 +10,5 @@ nb_sub = nbformat.v4.new_notebook()
 nb_sub.cells = [nb.cells[i] for i in cells_to_run]
 
 ep = ExecutePreprocessor(timeout=7200, kernel_name='python3')
-ep.preprocess(nb_sub, {'metadata': {'path': 'c:/Users/kosuke/study/400MHz変更用/'}})
+ep.preprocess(nb_sub, {'metadata': {'path': 'c:/Users/kosuke/study/400MHz変更用/sim/'}})
 print("学習完了")

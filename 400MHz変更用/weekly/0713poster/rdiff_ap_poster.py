@@ -1,7 +1,7 @@
 # ポスター Experiments 帯用: r_diff 別 AP 棒グラフ
 # 許容誤差はポスターの PR 曲線 (coco_ap_pr_curves.png) と同一の
 # A_TOL=1, D_TOL=0, R_TOL=1 に統一する（12通り平均だった stage6 と数値を揃えるため）。
-# 検出収集・AP 計算は experiments/eval_nn/tolerance_sweep.py と同一ロジック。
+# 検出収集・AP 計算は sim/experiments/eval_nn/tolerance_sweep.py と同一ロジック。
 import os
 import numpy as np
 import pandas as pd
@@ -14,7 +14,8 @@ import torch.nn.functional as F
 
 # ===== パス（スクリプト位置基準） =====
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-ROOT_DIR   = os.path.normpath(os.path.join(SCRIPT_DIR, "..", ".."))
+# モデル・データセットのメタデータは sim/ 以下にあり、metadata.csv 内の相対パスも sim/ 基準
+ROOT_DIR   = os.path.normpath(os.path.join(SCRIPT_DIR, "..", "..", "sim"))
 
 MODEL_PATH     = os.path.join(ROOT_DIR, "models", "best_detector_narrow_angle.pt")
 FIXED_META_CSV = os.path.join(ROOT_DIR, "learn_dataset_narrow_angle_fixed", "metadata.csv")

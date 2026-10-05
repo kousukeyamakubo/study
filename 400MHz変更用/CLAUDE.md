@@ -5,7 +5,8 @@
 道路を走る自転車・歩行者を計測して、.dat → RD → 距離−時間 → 軌跡 の後処理と、レーン（横位置）の識別可否を検証している。
 
 シミュレーション（WaveFarer + UNet 検出器）は**保留中**。関連ファイルの一覧は `docs/overview.md` の末尾。
-保留中の学習まわりのファイル（`check.ipynb`、`learn_dataset_*`、`models/` など）は、指示がない限り読まなくてよい。
+シミュレーション・DICOMO 時代のファイルは一式 `sim/` にある（中の相対パスは `sim/` 基準のまま）。
+保留中の学習まわりのファイル（`sim/check.ipynb`、`sim/learn_dataset_*`、`sim/models/` など）は、指示がない限り読まなくてよい。
 
 ## 主要ファイル（実測系）
 
@@ -67,7 +68,7 @@ git log --since="7 days ago" --oneline
 | 関数・変数 | snake_case | `run_epoch`, `decode_peaks_from_logits` |
 | 定数 | UPPER_SNAKE_CASE | `N_FIXED`, `BATCH_SIZE`, `DEVICE` |
 | モデル保存ファイル | `best_detector_<説明>.pt` | `best_detector_agnostic.pt` |
-| データセットフォルダ | `learn_dataset_<説明>/` | `learn_dataset_fixed_angle/` |
+| データセットフォルダ | `sim/learn_dataset_<説明>/` | `sim/learn_dataset_fixed_angle/` |
 
 ### ノートブック運用
 
