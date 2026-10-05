@@ -42,3 +42,17 @@
 
 - **Hit rate**: 予測ピークが真値から (d_tol=2, r_tol=3) ビン以内に入った割合
 - シナリオテスト: r_diff（レンジビン差）を変化させて近距離分離性能を評価
+
+## シミュレーション系のファイル（保留中）
+
+実測フェーズ以前の主要ファイル。CLAUDE.md から移した。
+
+| ファイル | 役割 |
+|---|---|
+| `check.ipynb` | メイン: 学習・評価・可視化 |
+| `learn_data_generator.ipynb` | データセット生成 |
+| `monte-carlo-simulation.ipynb` | モンテカルロ評価・CFAR比較 |
+| `weekly/0601meeting/rad_from_csv.ipynb` | WaveFarer CSV → RD マップ変換 |
+| `main.ipynb` | システムパラメータ・SNR計算（2GHz/400MHz比較） |
+| `Cyclist_env_RDA_2nano.py` | RD マップ生成の処理系（学習データと同一） |
+| `models/best_detector_narrow_angle.pt` | sim での最良モデル重み（narrow角度グリッド対応） |
