@@ -19,7 +19,7 @@
 # 角度の符号の向き（どちらが +）は未検証。
 #
 # 使い方:
-#   cd weekly/1013/axes
+#   cd weekly/1013/1001
 #   python axes_maps.py
 
 import json

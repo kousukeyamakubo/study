@@ -6,7 +6,7 @@
 #      （weekly/1001/lane_visibility.py）を帯ごとに掛け、時刻反転の対照からの上乗せ [dB] を出す。
 #      d（最接近距離）は 10/1 の幾何から出し、置き方を変えた分のずれは ±1.5 m の総当たりで吸収する
 #   2. 窓の床: 動体ビン（MTI あり）の距離ごとの床。9/28 の開/閉の値と並べる
-#   3. 背景の安定度: 全距離共通の位相の段差（background_recheck.py）と、室内（R 0.5〜5 m）の動き
+#   3. 背景の安定度: 全距離共通の位相の段差（1013/1001/background_recheck.py）と、室内（R 0.5〜5 m）の動き
 #      段差があると複素の背景差分が使えない。室内の動きは操作者
 #
 # 判定の目安（collect/README.md）:
@@ -37,6 +37,8 @@ from atlas_ridge_track import moving_power_db                    # noqa: E402
 from lane_visibility import matched_score                        # noqa: E402
 from plot_lane_truth import lane_range                           # noqa: E402
 
+# 共通位相の補正は、10/1 夜の背景の見直し（1013/1001/）で作ったものを使う
+sys.path.insert(0, str(ROOT.parent / "1001"))
 from background_recheck import common_phase                      # noqa: E402
 
 EXPORT = W1001.parent / "0727" / "atlas_export.py"

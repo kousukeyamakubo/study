@@ -1,0 +1,16 @@
+-> figures\135532_bike_approach.png
+-> figures\135606_bike_depart.png
+-> figures\142246_car_depart.png
+-> figures\142546_car_approach.png
+-> figures\143104_bike_approach_parked_car.png
+-> figures\143133_bike_depart_parked_car.png
+-> figures\overview.png
+-> figures\overview_fd.png
+
+期待角度（レーン1、10/1 の yaw）からの残差の中央値 [deg]（目標ありフレーム、R 22〜40 m）
+  135532 bike approach               :   -8.0  (n=37)
+  135606 bike depart                 :   -8.0  (n=28)
+  142246 car depart                  :   -4.9  (n=32)
+  142546 car approach                :   -6.7  (n=38)
+  143104 bike approach, parked car   :  -10.1  (n=17)
+  143133 bike depart, parked car     :   -8.9  (n=14)
