@@ -1,0 +1,37 @@
+
+
+
+
+
+
+
+
+
+
+
+
+Range-Angle -4.3〜40.7 dB, Range Profile 13.6〜56.7 dB（MTI なし／ありで共通）
+-> video/1_bike_app_nomti_ja.mp4  (静止画 t = 16.2 s)
+-> video/1_bike_app_nomti_en.mp4  (静止画 t = 16.2 s)
+-> video/1_bike_app_mti_ja.mp4  (静止画 t = 16.2 s)
+-> video/1_bike_app_mti_en.mp4  (静止画 t = 16.2 s)
+-> video/2_bike_dep_nomti_ja.mp4  (静止画 t = 5.4 s)
+-> video/2_bike_dep_nomti_en.mp4  (静止画 t = 5.4 s)
+-> video/2_bike_dep_mti_ja.mp4  (静止画 t = 5.4 s)
+-> video/2_bike_dep_mti_en.mp4  (静止画 t = 5.4 s)
+-> video/3_car_app_nomti_ja.mp4  (静止画 t = 17.4 s)
+-> video/3_car_app_nomti_en.mp4  (静止画 t = 17.4 s)
+-> video/3_car_app_mti_ja.mp4  (静止画 t = 17.4 s)
+-> video/3_car_app_mti_en.mp4  (静止画 t = 17.4 s)
+-> video/4_car_dep_nomti_ja.mp4  (静止画 t = 9.2 s)
+-> video/4_car_dep_nomti_en.mp4  (静止画 t = 9.2 s)
+-> video/4_car_dep_mti_ja.mp4  (静止画 t = 9.2 s)
+-> video/4_car_dep_mti_en.mp4  (静止画 t = 9.2 s)
+-> video/5_bike_parked_app_nomti_ja.mp4  (静止画 t = 15.2 s)
+-> video/5_bike_parked_app_nomti_en.mp4  (静止画 t = 15.2 s)
+-> video/5_bike_parked_app_mti_ja.mp4  (静止画 t = 15.2 s)
+-> video/5_bike_parked_app_mti_en.mp4  (静止画 t = 15.2 s)
+-> video/6_bike_parked_dep_nomti_ja.mp4  (静止画 t = 5.6 s)
+-> video/6_bike_parked_dep_nomti_en.mp4  (静止画 t = 5.6 s)
+-> video/6_bike_parked_dep_mti_ja.mp4  (静止画 t = 5.6 s)
+-> video/6_bike_parked_dep_mti_en.mp4  (静止画 t = 5.6 s)
