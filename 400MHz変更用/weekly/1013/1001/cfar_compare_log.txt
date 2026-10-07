@@ -1,0 +1,70 @@
+CA-CFAR 窓: 訓練 (2, 5)・ガード (1, 2)（ドップラー, 距離）、公称 Pfa 0.001 の係数 8.6 dB
+
+(1) 真の軌跡の当てはめ（3 方式の床超過の平均、R 30〜49 m）
+    No. 1 walk lane1 app: v 2.10 m/s, t0   25.8 s, 軌跡上 2.9 dB（時刻反転の対照 1.8 dB）
+    No. 2 walk lane1 dep: v 2.15 m/s, t0   15.4 s, 軌跡上 2.2 dB（時刻反転の対照 2.6 dB）  → 除外
+    No. 3 walk lane1 app: v 2.15 m/s, t0   25.8 s, 軌跡上 3.4 dB（時刻反転の対照 1.8 dB）
+    No. 4 walk lane1 dep: v 2.15 m/s, t0   14.6 s, 軌跡上 1.5 dB（時刻反転の対照 1.5 dB）  → 除外
+    No. 5 walk lane1 app: v 2.15 m/s, t0   25.4 s, 軌跡上 3.1 dB（時刻反転の対照 1.5 dB）
+    No. 6 walk lane1 dep: v 1.10 m/s, t0    0.4 s, 軌跡上 3.2 dB（時刻反転の対照 3.4 dB）  → 除外
+    No. 7 walk lane2 app: v 1.65 m/s, t0   29.0 s, 軌跡上 2.0 dB（時刻反転の対照 1.9 dB）  → 除外
+    No. 8 walk lane2 dep: v 1.35 m/s, t0    5.2 s, 軌跡上 1.5 dB（時刻反転の対照 1.6 dB）  → 除外
+    No. 9 walk lane2 app: v 1.40 m/s, t0   15.6 s, 軌跡上 4.1 dB（時刻反転の対照 2.3 dB）
+    No.10 walk lane2 dep: v 0.80 m/s, t0    1.2 s, 軌跡上 2.1 dB（時刻反転の対照 1.8 dB）  → 除外
+    No.11 walk lane2 app: v 1.65 m/s, t0   29.0 s, 軌跡上 1.6 dB（時刻反転の対照 1.3 dB）  → 除外
+    No.12 walk lane2 dep: v 2.00 m/s, t0   14.0 s, 軌跡上 2.2 dB（時刻反転の対照 1.6 dB）  → 除外
+    No.19 bike lane1 app: v 2.30 m/s, t0   21.8 s, 軌跡上 6.6 dB（時刻反転の対照 3.2 dB）
+    No.20 bike lane1 dep: v 2.90 m/s, t0    8.8 s, 軌跡上 4.9 dB（時刻反転の対照 2.7 dB）
+    No.21 bike lane1 app: v 1.90 m/s, t0   26.2 s, 軌跡上 7.2 dB（時刻反転の対照 3.5 dB）
+    No.22 bike lane1 dep: v 2.65 m/s, t0    8.8 s, 軌跡上 7.0 dB（時刻反転の対照 3.6 dB）
+    No.23 bike lane1 app: v 2.05 m/s, t0   24.2 s, 軌跡上 7.3 dB（時刻反転の対照 3.6 dB）
+    No.24 bike lane1 dep: v 2.95 m/s, t0    8.0 s, 軌跡上 5.6 dB（時刻反転の対照 3.2 dB）
+    No.25 bike lane2 app: v 2.05 m/s, t0   24.0 s, 軌跡上 3.0 dB（時刻反転の対照 3.0 dB）  → 除外
+    No.26 bike lane2 dep: v 2.55 m/s, t0    6.2 s, 軌跡上 3.3 dB（時刻反転の対照 3.3 dB）  → 除外
+    No.27 bike lane2 app: v 1.55 m/s, t0   14.0 s, 軌跡上 4.5 dB（時刻反転の対照 2.3 dB）
+    No.28 bike lane2 dep: v 2.55 m/s, t0   20.0 s, 軌跡上 4.4 dB（時刻反転の対照 3.2 dB）
+    No.29 bike lane2 app: v 1.80 m/s, t0   27.0 s, 軌跡上 2.7 dB（時刻反転の対照 1.8 dB）  → 除外
+    No.30 bike lane2 dep: v 2.75 m/s, t0    6.2 s, 軌跡上 2.9 dB（時刻反転の対照 2.6 dB）  → 除外
+    評価に使う走行 12 本: No.1, No.3, No.5, No.9, No.19, No.20, No.21, No.22, No.23, No.24, No.27, No.28
+
+(2) 公称しきい値（8.5 dB）での実測（12 本の合計）
+               誤警報率 全体     DC ビン      動体ビン   near 21-30 m    mid 30-40 m    far 40-49 m
+MTI           1.28e-03  0.00e+00  1.28e-03           0.01           0.54           0.67
+no MTI        1.59e-02  2.54e-01  3.58e-05           0.04           0.00           0.00
+bg-sub        1.19e-02  1.47e-01  2.94e-03           0.31           0.37           0.58
+    帯ごとの軌跡上のフレーム数: near 21-30 m 572, mid 30-40 m 273, far 40-49 m 209
+
+(3) 誤警報率 0.001 に揃えたときの検出率（しきい値を振った曲線から補間）
+            しきい値[dB]   near 21-30 m    mid 30-40 m    far 40-49 m
+MTI              8.9           0.01           0.51           0.65
+no MTI          15.2           0.00           0.00           0.00
+bg-sub          16.7           0.02           0.06           0.11
+    同じ、ただし誤警報を動体ビンだけで数えたとき（静止物を別の手段で捨てられる場合）
+MTI              8.9           0.01           0.51           0.65
+no MTI           7.7           0.06           0.02           0.00
+bg-sub          10.5           0.19           0.26           0.45
+    偶然の当たり（時刻反転した軌跡での検出率）、誤警報率を全体で揃えたとき
+MTI                            0.00           0.05           0.00
+no MTI                         0.00           0.00           0.00
+bg-sub                         0.04           0.00           0.00
+    偶然の当たり（時刻反転した軌跡での検出率）、誤警報率を動体ビンだけで揃えたとき
+MTI                            0.00           0.05           0.00
+no MTI                         0.04           0.02           0.00
+bg-sub                         0.25           0.01           0.00
+
+(4) 走行ごとの検出率（誤警報率 0.001 のしきい値、近 / 中 / 遠。分母 0 は -）
+    No. 1 walk lane1 app: MTI 0.00/0.26/0.16 | no MTI 0.00/0.00/0.00 | bg-sub 0.02/0.00/0.00
+    No. 3 walk lane1 app: MTI 0.00/0.37/0.32 | no MTI 0.00/0.00/0.00 | bg-sub 0.09/0.00/0.00
+    No. 5 walk lane1 app: MTI 0.00/0.47/0.40 | no MTI 0.00/0.00/0.00 | bg-sub 0.00/0.00/0.00
+    No. 9 walk lane2 app: MTI 0.00/0.00/- | no MTI 0.00/0.00/- | bg-sub 0.00/0.00/-
+    No.19 bike lane1 app: MTI 0.00/0.68/0.87 | no MTI 0.00/0.00/0.00 | bg-sub 0.00/0.11/0.13
+    No.20 bike lane1 dep: MTI 0.00/0.50/0.84 | no MTI 0.00/0.00/0.00 | bg-sub 0.21/0.00/0.11
+    No.21 bike lane1 app: MTI 0.04/0.71/0.96 | no MTI 0.00/0.00/0.00 | bg-sub 0.02/0.09/0.29
+    No.22 bike lane1 dep: MTI 0.05/0.68/0.95 | no MTI 0.00/0.00/0.00 | bg-sub 0.00/0.12/0.15
+    No.23 bike lane1 app: MTI 0.00/0.69/0.81 | no MTI 0.00/0.00/0.00 | bg-sub 0.00/0.22/0.27
+    No.24 bike lane1 dep: MTI 0.00/0.55/0.56 | no MTI 0.00/0.00/0.00 | bg-sub 0.00/0.05/0.17
+    No.27 bike lane2 app: MTI 0.00/0.00/- | no MTI 0.00/0.00/- | bg-sub 0.00/0.00/-
+    No.28 bike lane2 dep: MTI 0.00/0.00/- | no MTI 0.00/0.00/- | bg-sub 0.00/0.00/-
+
+-> figures/cfar_compare_roc.png
+-> figures/cfar_compare_No19.png
