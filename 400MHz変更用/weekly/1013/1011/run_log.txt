@@ -1,0 +1,19 @@
+色の範囲を決めるための分位点 [dB]（R 15〜55 m、12 本まとめて）
+  電力和（ドップラーなし）・MTI なし      1%:  33.1  50%:  50.5  99%:  69.6  99.9%:  69.7  （色の範囲 35〜70）
+  電力和（ドップラーなし）・MTI あり      1%:  27.9  50%:  29.9  99%:  35.8  99.9%:  41.3  （色の範囲 27〜42）
+  ドップラー最大・MTI あり           1%:  15.2  50%:  18.3  99%:  29.3  99.9%:  37.2  （色の範囲 15〜45）
+-> figures\No01_walk_lane1_app.png
+-> figures\No03_walk_lane1_app.png
+-> figures\No05_walk_lane1_app.png
+-> figures\No09_walk_lane2_app.png
+-> figures\No19_bike_lane1_app.png
+-> figures\No20_bike_lane1_dep.png
+-> figures\No21_bike_lane1_app.png
+-> figures\No22_bike_lane1_dep.png
+-> figures\No23_bike_lane1_app.png
+-> figures\No24_bike_lane1_dep.png
+-> figures\No27_bike_lane2_app.png
+-> figures\No28_bike_lane2_dep.png
+-> figures\overview_sum_nomti.png
+-> figures\overview_sum_mti.png
+-> figures\overview_dmax_mti.png
