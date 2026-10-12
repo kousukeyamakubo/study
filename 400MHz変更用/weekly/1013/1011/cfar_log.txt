@@ -1,0 +1,38 @@
+目標が来ない帯 R 55〜62 m（9 ビン）の確認
+  電力和（ドップラーなし）・MTI なし      時間中央値の帯の中の幅 6.0 dB（最大のビン R 61.8 m）
+  電力和（ドップラーなし）・MTI あり      時間中央値の帯の中の幅 0.9 dB（最大のビン R 61.8 m）
+  ドップラー最大・MTI あり           時間中央値の帯の中の幅 1.5 dB（最大のビン R 61.8 m）
+
+しきい値（目標が来ない帯でセルの誤検出 0.001）
+  電力和（ドップラーなし）・MTI なし       3.87 dB（セル 16200）
+  電力和（ドップラーなし）・MTI あり       1.00 dB（セル 16200）
+  ドップラー最大・MTI あり            2.67 dB（セル 16200）
+
+検出（上のしきい値）: 走路の帯 R 15〜55 m の、1 フレームあたりの検出セル数（12 本の平均）
+  電力和（ドップラーなし）・MTI なし       5.22（走行ごと 5.00〜6.11）
+  電力和（ドップラーなし）・MTI あり      13.81（走行ごと 13.40〜14.83）
+  ドップラー最大・MTI あり            7.09（走行ごと 6.51〜7.89）
+
+縦の線の距離での、検出の割合（その距離帯のセルのうち検出されたもの、12 本・全フレーム）
+                             17 m    34 m    50 m    67 m   線の外（走路の帯）
+  電力和（ドップラーなし）・MTI なし       0.000   0.429   0.071   0.000    0.063
+  電力和（ドップラーなし）・MTI あり       0.722   0.762   0.811   0.837    0.076
+  ドップラー最大・MTI あり            0.315   0.363   0.440   0.563    0.051
+
+-> figures/cfar_rate_by_range.png
+-> figures/cfar_count_vs_threshold.png
+-> figures\cfar_No01_walk_lane1_app.png
+-> figures\cfar_No03_walk_lane1_app.png
+-> figures\cfar_No05_walk_lane1_app.png
+-> figures\cfar_No09_walk_lane2_app.png
+-> figures\cfar_No19_bike_lane1_app.png
+-> figures\cfar_No20_bike_lane1_dep.png
+-> figures\cfar_No21_bike_lane1_app.png
+-> figures\cfar_No22_bike_lane1_dep.png
+-> figures\cfar_No23_bike_lane1_app.png
+-> figures\cfar_No24_bike_lane1_dep.png
+-> figures\cfar_No27_bike_lane2_app.png
+-> figures\cfar_No28_bike_lane2_dep.png
+-> figures\cfar_overview_sum_nomti.png
+-> figures\cfar_overview_sum_mti.png
+-> figures\cfar_overview_dmax_mti.png
