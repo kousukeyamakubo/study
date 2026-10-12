@@ -12,6 +12,7 @@
 # 使い方:
 #   cd weekly/1013/1005
 #   python axes_maps_1005.py
+#   python axes_maps_1005.py --lang ja   （発表向けの日本語版を *_ja.png で出す。ドップラー−時間・時刻タグ・赤点・網掛け・角度の符号の注記なし）
 
 import json
 import subprocess
@@ -165,7 +166,89 @@ def overview_figure(maps, kind, out):
     print(f"-> {out.relative_to(HERE)}")
 
 
+# ---- 日本語版（発表向け）: 距離−時間と角度−時間だけにし、時刻タグ・期待角度の赤点は描かない ----
+SCEN_JA = {
+    "135532": "自転車が接近", "135606": "自転車が離反",
+    "142246": "車が離反", "142546": "車が接近",
+    "143104": "自転車が接近（駐車車両あり）", "143133": "自転車が離反（駐車車両あり）",
+}
+KIND_JA = {"mti": "MTI あり", "fd": "MTI なし（フレーム間差分）"}
+# res_bar の白い線の説明。「バー」「ビン」では伝わらないので、線の長さが何を表すかを書く
+RES_NOTE_JA = (f"各図の上端の白い線の長さ = 分解能（距離 {RANGE_RES:.2f} m、角度は正面で {ANG_RES}°・"
+               f"30° 方向で {ANG_RES / np.cos(np.radians(30)):.1f}°）")
+
+
+def setup_font_ja():
+    # Windows 標準の Meiryo（presentations/20261014_ceatec/common.py と同じ）。Meiryo の「−」は字形が崩れるので ASCII にする
+    plt.rcParams["font.family"] = ["Meiryo"]
+    plt.rcParams["axes.unicode_minus"] = False
+
+
+def draw_rt_ja(ax, m, label=True):
+    """距離−時間を 1 枚描く（日本語版）"""
+    keep = (m["rng"] >= R_LO) & (m["rng"] <= R_HI)
+    im = ax.pcolormesh(m["rng"][keep], m["t"], m["rt"][:, keep], shading="nearest", cmap="viridis",
+                       vmin=PW_LIM[0], vmax=PW_LIM[1])
+    res_bar(ax, "range", label=label)
+    ax.set_xlabel("距離 R [m]")
+    return im
+
+
+def draw_at_ja(ax, m, label=True):
+    """角度−時間を 1 枚描く（日本語版、期待角度の赤点なし）"""
+    im = ax.pcolormesh(ANG, m["t"], m["ang"], shading="nearest", cmap="viridis",
+                       vmin=ANG_LIM[0], vmax=ANG_LIM[1])
+    ax.set_xlim(-90, 90)
+    res_bar(ax, "ang", label=label)
+    ax.set_xlabel("角度 [°]")
+    return im
+
+
+def run_figure_ja(m2, tag, out):
+    """1 走行: 2 行（MTI あり / フレーム間差分）× 2 列（距離−時間・角度−時間）"""
+    # Meiryo は行の高さが大きいので、段の間を広めに空ける
+    fig, axes = plt.subplots(2, 2, figsize=(10, 9), sharey=True, gridspec_kw=dict(hspace=0.35))
+    for row, kind in enumerate(("mti", "fd")):
+        m = m2[kind]
+        im0 = draw_rt_ja(axes[row, 0], m)
+        im2 = draw_at_ja(axes[row, 1], m)
+        axes[row, 0].set_ylabel(f"{KIND_JA[kind]}\n時刻 [s]")
+        fig.colorbar(im0, ax=axes[row, 0], label="受信電力 [dB]", shrink=0.8)
+        fig.colorbar(im2, ax=axes[row, 1], label="受信電力 [dB]", shrink=0.8)
+    axes[0, 0].set_title("距離−時間", fontsize=11)
+    axes[0, 1].set_title("角度−時間", fontsize=11)
+    fig.suptitle(f"{SCEN_JA[tag]}\n{RES_NOTE_JA}", fontsize=10)
+    fig.savefig(out, dpi=90, bbox_inches="tight")
+    plt.close(fig)
+    print(f"-> {out.relative_to(HERE)}")
+
+
+def overview_figure_ja(maps, kind, out):
+    """6 本を横に並べ、2 行（距離−時間・角度−時間）で比べる（日本語版）"""
+    fig, axes = plt.subplots(2, len(RUNS), figsize=(3.2 * len(RUNS), 8.5), sharey=True,
+                             gridspec_kw=dict(hspace=0.25))
+    for j, (_, tag, _) in enumerate(RUNS):
+        m = maps[tag][kind]
+        # 細い格子では数値が重なるので、左端の列だけに書く（英語版と同じ）
+        im0 = draw_rt_ja(axes[0, j], m, label=(j == 0))
+        im2 = draw_at_ja(axes[1, j], m, label=(j == 0))
+        axes[1, j].set_xlabel("角度 [°]")
+        # 「（駐車車両あり）」は列幅に収まらないので改行する（全列で 2 行にそろえる）
+        title = SCEN_JA[tag].replace("（", "\n（") if "（" in SCEN_JA[tag] else SCEN_JA[tag] + "\n"
+        axes[0, j].set_title(title, fontsize=10)
+    for ax, lab in zip(axes[:, 0], ("距離−時間", "角度−時間")):
+        ax.set_ylabel(f"{lab}\n時刻 [s]")
+    fig.suptitle(f"10/5 昼の 6 走行（{KIND_JA[kind]}）\n{RES_NOTE_JA}",
+                 fontsize=11, y=1.06)
+    fig.colorbar(im0, ax=axes[0], label="受信電力 [dB]", shrink=0.8)
+    fig.colorbar(im2, ax=axes[1], label="受信電力 [dB]", shrink=0.8)
+    fig.savefig(out, dpi=90, bbox_inches="tight")
+    plt.close(fig)
+    print(f"-> {out.relative_to(HERE)}")
+
+
 def main():
+    ja = "--lang" in sys.argv and sys.argv[sys.argv.index("--lang") + 1] == "ja"
     FIG.mkdir(exist_ok=True)
     DATA.mkdir(exist_ok=True)
     gi = DATA / ".gitignore"
@@ -175,6 +258,14 @@ def main():
     for folder, tag, scen in RUNS:
         dat = HERE / folder / f"atlas_log_20261005_{tag}.dat"
         maps[tag] = run_maps(dat)
+    if ja:
+        setup_font_ja()
+        for _, tag, scen in RUNS:
+            run_figure_ja(maps[tag], tag, FIG / f"{tag}_{scen.replace(', ', '_').replace(' ', '_')}_ja.png")
+        for kind in ("mti", "fd"):
+            overview_figure_ja(maps, kind, FIG / f"overview{'' if kind == 'mti' else '_fd'}_ja.png")
+        return
+    for _, tag, scen in RUNS:
         run_figure(maps[tag], f"{tag} {scen}", FIG / f"{tag}_{scen.replace(', ', '_').replace(' ', '_')}.png")
     for kind in ("mti", "fd"):
         overview_figure(maps, kind, FIG / f"overview{'' if kind == 'mti' else '_fd'}.png")

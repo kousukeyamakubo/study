@@ -16,6 +16,7 @@
 # 使い方:
 #   cd weekly/1013/1005
 #   python static_angle_1005.py      （事前に axes_maps_1005.py で data/export_nomti を作る）
+#   python static_angle_1005.py --lang ja   （図中の文字を日本語にした版を *_ja.png で出す）
 
 import json
 import sys
@@ -41,6 +42,23 @@ MAX_SHIFT = 40                  # 探すずれの範囲 [u ビン]（±0.31、�
 # (時刻タグ, 回)。回 = 間にレーダーに触っていないはずの組
 TAGS = [("135532", "13:55"), ("135606", "13:55"),
         ("142246", "14:22-"), ("142546", "14:22-"), ("143104", "14:22-"), ("143133", "14:22-")]
+# 図中の文字。英語版を既定にして、既存の図はそのまま再現できるようにする
+TXT = {
+    "en": dict(
+        db="dB", diff="difference [dB]", shift="estimated shift: {d:+.2f} deg",
+        rows=("same session", "across sessions"), range="range R [m]",
+        ang="angle [deg] (sign convention unverified)",
+        title="10/5 static objects (no MTI, zero-Doppler bin, time median): range-angle map\n"
+              "top: two runs at 13:55 (no touch expected);  bottom: 13:55 vs 14:22",
+    ),
+    "ja": dict(
+        db="dB", diff="差 [dB]", shift="推定したずれ: {d:+.2f}°",
+        rows=("同じ回", "回をまたぐ"), range="距離 R [m]",
+        ang="角度 [°]（符号の向きは未確認）",
+        title="10/5 静止物の距離−角度マップ（MTI なし・速度 0 ビン・時間中央値）\n"
+              "上: 13:55 の 2 本（触っていないはず）　下: 13:55 と 14:22 の比較",
+    ),
+}
 
 
 def static_ra(tag):
@@ -92,6 +110,12 @@ def r_shift(ra_a, ra_b, rsel, rng):
 
 
 def main():
+    lang = "ja" if "--lang" in sys.argv and sys.argv[sys.argv.index("--lang") + 1] == "ja" else "en"
+    tx = TXT[lang]
+    if lang == "ja":
+        # Windows 標準の Meiryo（presentations/20261014_ceatec/common.py と同じ）
+        plt.rcParams["font.family"] = ["Meiryo"]
+        plt.rcParams["axes.unicode_minus"] = False
     maps = {}
     for tag, _ in TAGS:
         maps[tag], rng = static_ra(tag)
@@ -133,17 +157,16 @@ def main():
                                          vmin=lim[0], vmax=lim[1])
             axes[row, j].set_title(lab, fontsize=10)
             if j != 1:
-                fig.colorbar(im, ax=axes[row, j], label="dB" if j == 0 else "difference [dB]", shrink=0.8)
+                fig.colorbar(im, ax=axes[row, j], label=tx["db"] if j == 0 else tx["diff"], shrink=0.8)
         du = next(r[3] for r in rows if r[0] == ta and r[1] == tb)
-        axes[row, 0].set_ylabel(f"{'same session' if row == 0 else 'across sessions'}\nrange R [m]")
-        axes[row, 2].text(0.02, 0.97, f"estimated shift: {np.degrees(du):+.2f} deg", transform=axes[row, 2].transAxes,
+        axes[row, 0].set_ylabel(f"{tx['rows'][row]}\n{tx['range']}")
+        axes[row, 2].text(0.02, 0.97, tx["shift"].format(d=np.degrees(du)), transform=axes[row, 2].transAxes,
                           va="top", fontsize=9, bbox=dict(fc="w", alpha=0.8))
     for ax in axes[-1]:
-        ax.set_xlabel("angle [deg] (sign convention unverified)")
+        ax.set_xlabel(tx["ang"])
         ax.set_xlim(-65, 65)
-    fig.suptitle("10/5 static objects (no MTI, zero-Doppler bin, time median): range-angle map\n"
-                 "top: two runs at 13:55 (no touch expected);  bottom: 13:55 vs 14:22", fontsize=11)
-    out = FIG / "static_angle_compare.png"
+    fig.suptitle(tx["title"], fontsize=11)
+    out = FIG / f"static_angle_compare{'_ja' if lang == 'ja' else ''}.png"
     fig.savefig(out, dpi=90, bbox_inches="tight")
     plt.close(fig)
     print(f"\n-> {out.relative_to(HERE)}")

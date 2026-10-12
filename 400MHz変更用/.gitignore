@@ -26,3 +26,4 @@ vehicle/
 
 # 文献サーベイ（PDF・メモ）。手元だけで使う
 weekly/1013/survey/
+*.cam.gz
